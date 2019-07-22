@@ -2,7 +2,7 @@ var pdfreader = require("pdfreader");
 var fs = require("fs");
 
 const filename = "C:\\Users\\adbosi\\Downloads\\tax documents 2018 final\\tax documents 2018\\morgan-q1.pdf";
-let transactions = [];
+const alignmentTolerance = 3;
 
 function getTable() {
     return new Promise((resolve, reject) => {
@@ -40,7 +40,8 @@ function pprint(obj) {
     console.log(str); // Logs output to dev tools console.
 }
 
-function generateJSON(table) {
+function extractTransactions(table) {
+    let transactions = [];
     let headers = table[0];
     table.forEach((row, index) => {
        if (index === 0) {
@@ -49,14 +50,17 @@ function generateJSON(table) {
        }
        let transaction = {};
        row.forEach(entry => {
-           // console.log(`x: ${entry.x} y: ${entry.y} `);
-           let header = headers.find(header => header.x.toFixed(0) === entry.x.toFixed(0));
+           // console.log(`x: ${entry.x} y: ${entry.y} w: ${entry.w}`);
+           let header = headers.find(header => {
+               return Math.abs(header.x - entry.x) < alignmentTolerance;
+           });
            const headerName = header ? header.text : 'error';
            transaction[headerName] = entry.text;
        });
-        console.log(transaction);
         transactions.push(transaction);
     });
+
+    return transactions;
 }
 
 getTable().then(table => {
@@ -66,7 +70,8 @@ getTable().then(table => {
     // normalize
     let normalizedTable = table.map(row => row[0]);
 
-    generateJSON(normalizedTable);
+    const transactions = extractTransactions(normalizedTable);
+    console.log(transactions);
 
     // pprint(table);
 });
