@@ -17,14 +17,13 @@ const extractMeaningfulInformation = fidelityReportLines => {
 
         if (subArrayIndex < 0) {
             return {
-                exists: () => false,
+                next: () => undefined,
                 nextString: () => '',
                 nextFloat: () => 0
             };
         }
 
         return {
-            exists: () => subArrayIndex >= 0,
             next: () => getLocation(field, undefined, subArrayIndex + offset + 1),
             nextString: n => fidelityReportLines[offset + subArrayIndex + n],
             nextFloat: (n = 1) => tofloat(fidelityReportLines[offset + subArrayIndex + n]) || 0,
@@ -81,8 +80,8 @@ const extractMeaningfulInformation = fidelityReportLines => {
     }
     
     if (specialStockVests || regularStockVests) {
-        let location = getLocation('MICROSOFT CORP SHARES DEPOSITED');        
-        while (location.exists()) {
+        let location;        
+        while (location = location ? location.next() : getLocation('MICROSOFT CORP SHARES DEPOSITED')) {
             const { nextString, nextFloat } = location;
             
             reportSummary.stocks.list = reportSummary.stocks.list || [];
@@ -92,8 +91,6 @@ const extractMeaningfulInformation = fidelityReportLines => {
                 price: nextFloat(5),
                 amount: tofloat((nextFloat(4) * nextFloat(5)).toFixed(2)),
             });
-
-            location = location.next();
         }
     }
 
