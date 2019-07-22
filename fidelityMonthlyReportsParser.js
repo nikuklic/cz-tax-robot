@@ -1,3 +1,19 @@
+/**
+ * @typedef Lot
+ * @property {string} date The string representation of the date when the Lot was bought/received
+ * @property {number} quantity The amount of shares in the Lot
+ * @property {number} price The price per share
+ * @property {number} amount The total price/value of the Lot
+ */
+
+/**
+ * @typedef ReportSummary
+ * @property {string} period The string representation of the period of the current ReportSummary
+ * @property {{ received: number; list: Array<Lot> }} stocks Information about the stocks received 
+ * @property {{ received: number; taxesPaid: number }} dividends Information about the stocks received
+ * @property {{ bought: number; list: Array<Lot> }} espp Information about the stocks bought 
+ */
+
 const path = require('path');
 const fs = require('fs');
 
@@ -97,6 +113,10 @@ const extractMeaningfulInformation = fidelityReportLines => {
     return reportSummary;
 }
 
+/**
+ * @param {string} absolutePathToReportsDirectory path to a directory containing Fidelity reports
+ * @return {Promise<ReportSummary[]>}
+ */
 function parseFidelityReports(absolutePathToReportsDirectory) {
     const getSummaryOfMonthlyReports = fs.readdirSync(absolutePathToReportsDirectory)
         .filter(fileName => fileName.toLowerCase().endsWith('.pdf'))
