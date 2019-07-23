@@ -64,17 +64,19 @@ UI.setupStatusPage = () => {
             .then(json => {
                 if (json.status.aggregate === 'done') {
                     clearTimeout(updateInterval);
+
+                    aDownload.href = location.href + '/xlsx';
+                    aDownload.click();
                 }
                 if (json.status.aggregate === 'failed') {
                     clearTimeout(updateInterval);
                 }
 
-                aDownload.href = location.href + '/xlsx';
                 spanProgress.innerHTML = `Status: ${json.status.aggregate}`
                 preDiv.innerText = JSON.stringify(json, null, 2);
             })
             .catch(() => {
 
             }); 
-    }, 100);
+    }, 500);
 }
