@@ -40,11 +40,14 @@ UI.setupIndexPage = () => {
         input.files = fileList;
 
         form.appendChild(input);
+        form.submit();
     }
 }
 
 UI.setupStatusPage = () => {
     const preDiv = document.getElementById("pre");
+    const aDownload = document.getElementById("a-download");
+    const spanProgress = document.getElementById("span-progress");
 
     const updateInterval = setInterval(() => {
         fetch(location.href + '/json')
@@ -62,7 +65,12 @@ UI.setupStatusPage = () => {
                 if (json.status.aggregate === 'done') {
                     clearTimeout(updateInterval);
                 }
+                if (json.status.aggregate === 'failed') {
+                    clearTimeout(updateInterval);
+                }
 
+                aDownload.href = location.href + '/xlsx';
+                spanProgress.innerHTML = `Status: ${json.status.aggregate}`
                 preDiv.innerText = JSON.stringify(json, null, 2);
             })
             .catch(() => {

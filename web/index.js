@@ -3,25 +3,22 @@ const express = require('express')
 const upload = require('multer')();
 const app = express()
 const port = process.env.port || 3000
-const { delay } = require('../utils');
+const { generate } = require('../excelGenerator');
 const { parseFromMemory } = require('../fidelityReportsParser');
 
 const processing_queue = {};
 const getReport = token => processing_queue[token];
 const enqueueReportsProcessing = (files) => {
-    console.log(files.filter(({ buffer, ...rest }) => rest));
-
-    files = files.filter(f => f.mimetype === 'application/pdf');
-
     const token = Date.now() + Math.random();
     const fileBuffers = files        
         .map(f => f.buffer);
 
-    processing_queue[token] = {
+    const report = processing_queue[token] = {
         startedAt: Date.now(),
         status: {
-            fidelity: 'initializing',
-            morganStanley: 'initializing',
+            fidelity: 'none',
+            morganStanley: 'none',
+            excel: 'waiting',
             aggregate: 'in-progress'
         },
         output: {
@@ -31,73 +28,108 @@ const enqueueReportsProcessing = (files) => {
         },
         files: files
     };
-
     
-    const report = getReport(token);
-    if (!report) return undefined;
-
-    const processFidelityReports = (fileBuffers) => 
-        Promise.resolve()
-            .then(() => report.status.fidelity = 'parsing-pdfs')
+    const processFidelityReports = fileBuffers => 
+        Promise.resolve()        
+            .then(() => report.status.fidelity = 'parsing')
             .then(() => parseFromMemory(fileBuffers))
-            .then(() => report.status.fidelity = 'waiting-for-winter')
-            .then(() => delay(5000 + 5 * Math.random()))
             .then(json => {
-                const report = getReport(token);
-                if (!report) return undefined;
-
                 report.status.fidelity = 'done'
                 report.output.fidelity = json;
             });
 
     const processMorganStanleyReports = fileBuffers => 
         Promise.resolve()
-            .then(() => report.status.morganStanley = 'thinking...')
-            .then(() => delay(3000 + 5 * Math.random()))
             .then(() => {
-                const report = getReport(token);
-                if (!report) return undefined;
-
                 report.status.morganStanley = 'not-supported';
+                report.output.morganStanley = [];
             });
 
     const generateExcel = () => 
         Promise.resolve()
-            .then(() =>{
-                const report = getReport(token);
-                if (!report) return undefined;
-
-                report.status.aggregate = 'generating-excel';
+            .then(() => {
+                report.status.excel = 'generating-excel';
             })
-            .then(() => delay(5000 + 5 * Math.random()));            
+            .then(() => {
+                const excelGeneratorInput = {                    
+                    inputs: {
+                        exchangeRate: 21.78,
+                        esppDiscount: 10,
+                    },
+                    stocks: [
+                        ...report.output.fidelity
+                            .reduce((acc, e) => [
+                                ...acc, 
+                                ...(e.stocks.list || []).map(i => ({
+                                    date: i.date,
+                                    amount: i.quantity,
+                                    pricePerUnit: i.price,
+                                    price: i.amount
+                                }))], [])
+                    ],
+                    dividends: [
+                        ...report.output.fidelity
+                            .filter(e => e.dividends.received || e.dividends.taxesPaid)
+                            .map(e => ({
+                                date: '?',
+                                amount: e.dividends.received,                            
+                                tax: e.dividends.taxesPaid
+                            }))
+                    ],
+                    esppStocks: [
+                        ...report.output.fidelity
+                            .reduce((acc, e) => [
+                                ...acc,
+                                ...(e.espp.list || []).map(i => ({
+                                    date: i.date,
+                                    amount: i.quantity,
+                                    pricePerUnit: i.price,
+                                    price: i.amount
+                                }))
+                            ], [])
+                    ],
+                    esppDividends: []
+                };
+
+                console.log(JSON.stringify(excelGeneratorInput));
+
+                report.output.excel = generate(excelGeneratorInput);                
+                report.status.excel = 'done';
+            })
+            .catch(e => {
+                report.status.excel = 'failed';
+                report.output.excel = e.message;
+
+                throw e;
+            });            
 
     Promise.all([
         processFidelityReports(fileBuffers),
         processMorganStanleyReports(fileBuffers)
-    ]).then(() => {
-        const report = getReport(token);
-        if (!report) return;
-
-        return generateExcel()
-    })    
+    ])
+    .then(() => generateExcel())    
     .then(() => {
-        const report = getReport(token);
-        if (!report) return;
-
         report.status.aggregate = 'done';
-    });;
+    })
+    .catch(e => {
+        report.status.aggregate = 'failed';
+    });
 
     return token;
 }
-
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, './public/index.html'))
 });
 app.post('/', upload.array('files'), (req, res) => {    
-    const queueToken = enqueueReportsProcessing(req.files);
-    res.redirect(`./status/${queueToken}`)
+    const uniquePdfs = new Map(req.files
+        .filter(f => f.mimetype === 'application/pdf')
+        .map(f => [f.originalname + f.size, f])
+    );
+    const reportToken = enqueueReportsProcessing(Array.from(uniquePdfs.values()));
+
+    res.redirect(`./status/${reportToken}`)
 });
 
 app.get('/status/:token/json', (req, res) => {
@@ -106,8 +138,22 @@ app.get('/status/:token/json', (req, res) => {
     if (report) {
         res.json({
             ...report,
-            files: report.files.map(({ buffer, ...fileInfo}) => fileInfo)
+            files: report.files.map(({ buffer, ...fileInfo}) => fileInfo),
+            output: {
+                fidelity: report.output.fidelity,
+                morganStanley: report.output.morganStanley
+            }
         })    
+    } else {
+        res.status(404);
+    }
+});
+
+app.get('/status/:token/xlsx', (req, res) => {
+    const report = getReport(req.params.token);
+
+    if (report) {
+        report.output.excel.write('report.xlsx', res);
     } else {
         res.status(404);
     }

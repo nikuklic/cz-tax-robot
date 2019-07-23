@@ -15,7 +15,11 @@ const USD_STYLE = {
     numberFormat: '[$$-en-US]#,##0.00'
 };
 
-const  generate = (input, outputPath) => {
+/**
+ * @param {*} input
+ * @return {xl.Workbook} Workbook
+ */
+const generate = (input, outputPath) => {
     const wb = new xl.Workbook();
     const ws = wb.addWorksheet("Sheet 1");
     let rowCursor = 1;
@@ -141,9 +145,7 @@ const  generate = (input, outputPath) => {
     const esppDividendsTaxEnd = xl.getExcelCellRef(rowCursor + input.esppDividends.length - 1, 5);
     ws.cell(rowCursor + input.esppDividends.length, 5).formula(`SUM(${esppDividendsTaxBegin}:${esppDividendsTaxEnd})`).style(CZK_STYLE);
 
-
-    // Write the workbook to a file
-    wb.write(outputPath);
+    return wb;
 }
 
 module.exports = {

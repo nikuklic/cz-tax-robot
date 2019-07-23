@@ -118,17 +118,24 @@ const extractMeaningfulInformation = fidelityReportLines => {
     return reportSummary;
 }
 
+const isFidelity = reportLines => {
+    const fidelity = reportLines.find(e => e.toLowerCase().indexOf('fidelity.com'));
+    return !!fidelity;
+}
+
 /**
  * @param {string} absolutePathToReportsDirectory path to a directory containing Fidelity reports
  * @return {Promise<ReportSummary[]>}
  */
 function parseFromDisk(absolutePathToReportsDirectory) {
-    const getSummaryOfEachReport = fs.readdirSync(absolutePathToReportsDirectory)
+    const getLinesFromEachReport = fs.readdirSync(absolutePathToReportsDirectory)
         .filter(fileName => fileName.toLowerCase().endsWith('.pdf'))
         .map(fileName => path.join(absolutePathToReportsDirectory, fileName))
-        .map(filePath => getLinesFromPdfAsync(filePath).then(extractMeaningfulInformation));
-
-    return Promise.all(getSummaryOfEachReport);
+        .map(filePath => getLinesFromPdfAsync(filePath));
+      
+    return Promise.all(getLinesFromEachReport)
+        .then(reports => reports.filter(isFidelity))
+        .then(reports => reports.map(extractMeaningfulInformation));
 }
 
 /**
@@ -136,9 +143,11 @@ function parseFromDisk(absolutePathToReportsDirectory) {
  * @return {Promise<ReportSummary[]>}
  */
 function parseFromMemory(buffers) {
-    const getSummaryOfEachReport = buffers.map(buffer => getLinesFromPdfAsync(buffer).then(extractMeaningfulInformation));
-
-    return Promise.all(getSummaryOfEachReport);
+    const getLinesFromEachReport = buffers.map(buffer => getLinesFromPdfAsync(buffer));
+    
+    return Promise.all(getLinesFromEachReport)
+        .then(reports => reports.filter(isFidelity))
+        .then(reports => reports.map(extractMeaningfulInformation));
 }
 
 module.exports = {
