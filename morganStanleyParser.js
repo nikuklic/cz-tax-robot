@@ -3,6 +3,13 @@ const pdfreader = require("pdfreader");
 const fs = require("fs");
 
 const alignmentTolerance = 3;
+const MorganTransaction = {
+    type: 'Activity Type',
+    date: 'Transaction Date',
+    amount: 'Quantity',
+    price: 'Price',
+    netAmount: 'Net Amount'
+};
 
 function getTable(filePath) {
     return new Promise((resolve, reject) => {
@@ -13,7 +20,7 @@ function getTable(filePath) {
                 if (err) {
                     console.error(err);
                 } else if (item && item.text) {
-                    if (item.text === 'Transaction Date') {
+                    if (item.text.includes('Transaction Date')) {
                         isParsing = true;
                         table = new pdfreader.TableParser(); // new/clear table for next page
                     }
@@ -40,6 +47,22 @@ function pprint(obj) {
     console.log(str); // Logs output to dev tools console.
 }
 
+function sanitizeTextValue(text) {
+    text = text.trim();
+    ['$', '(', ')'].forEach(char => text = text.replace(char, ''));
+    return text.replace(/\//g, '-');
+}
+
+function sanitizeTransaction(transaction) {
+    [MorganTransaction.netAmount, MorganTransaction.amount, MorganTransaction.price].forEach(property => {
+        if (transaction[property]) {
+            transaction[property] = parseFloat(transaction[property])
+        }
+    });
+
+    return transaction;
+}
+
 function extractTransactions(table) {
     let transactions = [];
     let headers = table[0];
@@ -54,10 +77,10 @@ function extractTransactions(table) {
            let header = headers.find(header => {
                return Math.abs(header.x - entry.x) < alignmentTolerance;
            });
-           const headerName = header ? header.text : 'error';
-           transaction[headerName] = entry.text;
+           const headerName = header ? header.text.trim() : 'error';
+           transaction[headerName] = sanitizeTextValue(entry.text);
        });
-        transactions.push(transaction);
+        transactions.push(sanitizeTransaction(transaction));
     });
 
     return transactions;
@@ -88,5 +111,6 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
 }
 
 module.exports = {
-    parseMorganStanleyReports
+    parseMorganStanleyReports,
+    MorganTransaction
 };
