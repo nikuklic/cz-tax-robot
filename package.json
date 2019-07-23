@@ -14,6 +14,7 @@
     "nodemon": "latest"
   },
   "scripts": {
+    "morgan": "node morganTest.js",
     "test-fidelity": "node fidelityTest.js",
     "test-excel": "node excelTest.js"
   }

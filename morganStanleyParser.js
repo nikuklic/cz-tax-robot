@@ -87,9 +87,6 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
     return Promise.all(getSummaryOfMonthlyReports);
 }
 
-parseMorganStanleyReports('C:\\Users\\adbosi\\Downloads\\tax documents 2018 final\\tax documents 2018\\morgan')
-    .then(reports => pprint(reports));
-
 module.exports = {
     parseMorganStanleyReports
 };
