@@ -14,6 +14,7 @@ const MorganTransaction = {
 function getTable(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         let isParsing = false;
+        let isMorgan = false;
 
         const reader = new PdfReader();
         const parseFn = typeof pathOrBuffer === 'string'
@@ -22,8 +23,13 @@ function getTable(pathOrBuffer) {
 
         parseFn.call(reader, pathOrBuffer, (err, item) => {
             if (err) {
+                reject(err);
                 console.error(err);
             } else if (item && item.text) {
+                if (item.text.toLowerCase().includes('morgan stanley smith barney')) {
+                    isMorgan = true;
+                }
+
                 if (item.text.includes('Transaction Date')) {
                     isParsing = true;
                     table = new TableParser(); // new/clear table for next page
@@ -34,11 +40,15 @@ function getTable(pathOrBuffer) {
                     resolve(table.getMatrix());
                 }
 
-                if (!isParsing) {
-                    return;
+                if (isParsing) {
+                    table.processItem(item);
                 }
-
-                table.processItem(item);
+            } else if (!item) {
+                if (!isMorgan) {
+                    reject('notMorgan');
+                } else {
+                    reject('could not find any entries');
+                }
             }
         });
     });
@@ -126,11 +136,17 @@ function parseFromMemory(buffers) {
                     return {
                         report: extractTransactions(normalizedTable)
                     };
-                    // pprint(table);
-                });
+                })
+                .catch(err => {
+                    if (err === 'notMorgan') {
+                        return
+                    }
+                    throw err;
+                })
         });
 
-    return Promise.all(getSummaryOfMonthlyReports);
+    return Promise.all(getSummaryOfMonthlyReports)
+        .then(reports => reports.filter(Boolean));
 }
 
 module.exports = {
