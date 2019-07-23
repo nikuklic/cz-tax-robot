@@ -1,0 +1,44 @@
+div {
+  margin: 5px;
+}
+
+#app {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#app #dropzone {
+  border: 5px dashed gray;
+  height: 200px;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+}
+
+#app .content {
+  display: none;
+}
+
+#app.hovered #dropzone {
+  opacity: 1;
+  border: 5px dashed blue;
+  border-radius: 5px;
+}
+
+#app:not(.hovered) .content:not(.hovered) {
+  display: block;
+}
+
+#app.hovered .content.hovered {
+  display: block;
+}
+
+#app.hovered #visualization {
+  opacity: 0.2;
+}

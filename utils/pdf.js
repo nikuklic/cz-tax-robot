@@ -1,10 +1,17 @@
 const { PdfReader } = require('pdfreader');
 
-function getLinesFromPdfAsync(path) {
+/**
+ * @param {string | Buffer} pathOrBuffer
+ */
+function getLinesFromPdfAsync(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         const items = [];
         const reader = new PdfReader();
-        reader.parseFileItems(path, (err, item) => {
+        const parseFn = typeof pathOrBuffer === 'string'        
+            ? reader.parseFileItems
+            : reader.parseBuffer;
+
+        parseFn.call(reader, pathOrBuffer, (err, item) => {
             if (err)
                 return reject(err);
             if (!item)

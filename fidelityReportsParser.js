@@ -17,7 +17,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const { getLinesFromPdfAsync } = require('./utils/pdf');
+const { getLinesFromPdfAsync } = require('./utils');
 
 const extractMeaningfulInformation = fidelityReportLines => {
     const tofloat = value => parseFloat(value.replace('$', '').replace(',', ''));
@@ -122,15 +122,26 @@ const extractMeaningfulInformation = fidelityReportLines => {
  * @param {string} absolutePathToReportsDirectory path to a directory containing Fidelity reports
  * @return {Promise<ReportSummary[]>}
  */
-function parseFidelityReports(absolutePathToReportsDirectory) {
-    const getSummaryOfMonthlyReports = fs.readdirSync(absolutePathToReportsDirectory)
+function parseFromDisk(absolutePathToReportsDirectory) {
+    const getSummaryOfEachReport = fs.readdirSync(absolutePathToReportsDirectory)
         .filter(fileName => fileName.toLowerCase().endsWith('.pdf'))
         .map(fileName => path.join(absolutePathToReportsDirectory, fileName))
         .map(filePath => getLinesFromPdfAsync(filePath).then(extractMeaningfulInformation));
 
-    return Promise.all(getSummaryOfMonthlyReports);
+    return Promise.all(getSummaryOfEachReport);
+}
+
+/**
+ * @param {Buffer[]} buffers A list of memory buffers representing the pdf reports
+ * @return {Promise<ReportSummary[]>}
+ */
+function parseFromMemory(buffers) {
+    const getSummaryOfEachReport = buffers.map(buffer => getLinesFromPdfAsync(buffer).then(extractMeaningfulInformation));
+
+    return Promise.all(getSummaryOfEachReport);
 }
 
 module.exports = {
-    parseFidelityReports
+    parseFromDisk,
+    parseFromMemory
 }

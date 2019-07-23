@@ -1,0 +1,28 @@
+<html>
+
+<head>
+    <link rel="stylesheet" media="screen" href="/ui.css">
+</head>
+
+<body>
+    <div id="app">
+        <div id="dropzone">
+            <div class="content hovered">
+                drop the Fidelity or MorganStanley .pdf reports here
+            </div>
+            <div class="content">
+                drag any Fidelity or MorganStanley .pdf reports here
+            </div>
+        </div>
+        <form method="POST" enctype="multipart/form-data" id="form">
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+</body>
+
+<script src="/ui.js"></script>
+<script>
+    UI.setupIndexPage();    
+</script>
+
+</html>
