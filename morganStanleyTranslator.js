@@ -22,7 +22,7 @@ function translateMorganStanleyReports(morganStanleyReports) {
     const normalizedDividends = dividendTransactions.map(transaction => {
         return {
             'date': transaction[MorganTransaction.date],
-            'price': transaction[MorganTransaction.netAmount],
+            'amount': transaction[MorganTransaction.netAmount],
             'tax': getTaxWithheld(taxTransactions, transaction[MorganTransaction.date])
         }
     });

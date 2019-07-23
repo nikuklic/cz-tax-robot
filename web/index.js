@@ -4,7 +4,9 @@ const upload = require('multer')();
 const app = express()
 const port = process.env.port || 3000
 const { generate } = require('../excelGenerator');
-const { parseFromMemory } = require('../fidelityReportsParser');
+const { parseFromMemory: parseFidelityFromMemory } = require('../fidelityReportsParser');
+const { parseFromMemory: parseMorganFromMemory  } = require('../morganStanleyParser');
+const { translateMorganStanleyReports  } = require('../morganStanleyTranslator');
 
 const processing_queue = {};
 const getReport = token => processing_queue[token];
@@ -32,7 +34,7 @@ const enqueueReportsProcessing = (files) => {
     const processFidelityReports = fileBuffers => 
         Promise.resolve()        
             .then(() => report.status.fidelity = 'parsing')
-            .then(() => parseFromMemory(fileBuffers))
+            .then(() => parseFidelityFromMemory(fileBuffers))
             .then(json => {
                 report.status.fidelity = 'done'
                 report.output.fidelity = json;
@@ -40,9 +42,17 @@ const enqueueReportsProcessing = (files) => {
 
     const processMorganStanleyReports = fileBuffers => 
         Promise.resolve()
-            .then(() => {
-                report.status.morganStanley = 'not-supported';
-                report.output.morganStanley = [];
+            .then(() => report.status.morganStanley = 'parsing')
+            .then(() => parseMorganFromMemory(fileBuffers))
+            .then(json => {
+                report.status.morganStanley = 'done'
+                report.output.morganStanley = json;
+            })
+            .catch(e => {
+                report.status.morganStanley = 'failed';
+                report.output.morganStanley = e.message;
+
+                throw e;
             });
 
     const generateExcel = () => 
@@ -51,12 +61,14 @@ const enqueueReportsProcessing = (files) => {
                 report.status.excel = 'generating-excel';
             })
             .then(() => {
+                const morganStanleyInput = translateMorganStanleyReports(report.output.morganStanley);
                 const excelGeneratorInput = {                    
                     inputs: {
                         exchangeRate: 21.78,
                         esppDiscount: 10,
                     },
                     stocks: [
+                        ...morganStanleyInput.stocks,
                         ...report.output.fidelity
                             .reduce((acc, e) => [
                                 ...acc, 
@@ -68,6 +80,7 @@ const enqueueReportsProcessing = (files) => {
                                 }))], [])
                     ],
                     dividends: [
+                        ...morganStanleyInput.dividends,
                         ...report.output.fidelity
                             .filter(e => e.dividends.received || e.dividends.taxesPaid)
                             .map(e => ({
@@ -91,12 +104,15 @@ const enqueueReportsProcessing = (files) => {
                     esppDividends: []
                 };
 
-                console.log(JSON.stringify(excelGeneratorInput));
+                //console.log(JSON.stringify(excelGeneratorInput));
 
                 report.output.excel = generate(excelGeneratorInput);                
                 report.status.excel = 'done';
             })
             .catch(e => {
+                console.log('Error: ', !!e);
+                console.log('Error: ', !!e, e.toString());
+
                 report.status.excel = 'failed';
                 report.output.excel = e.message;
 

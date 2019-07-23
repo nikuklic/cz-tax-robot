@@ -119,7 +119,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
 }
 
 const isFidelity = reportLines => {
-    const fidelity = reportLines.find(e => e.toLowerCase().indexOf('fidelity.com'));
+    const fidelity = reportLines.find(e => ~e.toLowerCase().indexOf('fidelity.com'));
     return !!fidelity;
 }
 

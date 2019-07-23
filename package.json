@@ -18,7 +18,7 @@
   "scripts": {
     "start": "node ./web/index.js",
     "morgan": "node morganTest.js",
-    "test-excel": "node excelTest.js",    
+    "test-excel": "node excelTest.js",
     "dev-web": "nodemon ./web/index.js"
   }
 }

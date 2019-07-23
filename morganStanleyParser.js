@@ -1,5 +1,5 @@
 const path = require('path');
-const pdfreader = require("pdfreader");
+const { PdfReader, TableParser } = require("pdfreader");
 const fs = require("fs");
 
 const alignmentTolerance = 3;
@@ -11,34 +11,36 @@ const MorganTransaction = {
     netAmount: 'Net Amount'
 };
 
-function getTable(filePath) {
+function getTable(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         let isParsing = false;
-        fs.readFile(filePath, (err, pdfBuffer) => {
-            // pdfBuffer contains the file content
-            new pdfreader.PdfReader().parseBuffer(pdfBuffer, function(err, item) {
-                if (err) {
-                    console.error(err);
-                } else if (item && item.text) {
-                    if (item.text.includes('Transaction Date')) {
-                        isParsing = true;
-                        table = new pdfreader.TableParser(); // new/clear table for next page
-                    }
 
-                    if (item.text.includes('COMPANY MESSAGE')) {
-                        isParsing = false;
-                        resolve(table.getMatrix());
-                    }
+        const reader = new PdfReader();
+        const parseFn = typeof pathOrBuffer === 'string'
+            ? reader.parseFileItems
+            : reader.parseBuffer;
 
-                    if (!isParsing) {
-                        return;
-                    }
-
-                    table.processItem(item);
+        parseFn.call(reader, pathOrBuffer, (err, item) => {
+            if (err) {
+                console.error(err);
+            } else if (item && item.text) {
+                if (item.text.includes('Transaction Date')) {
+                    isParsing = true;
+                    table = new TableParser(); // new/clear table for next page
                 }
-            });
-        });
 
+                if (item.text.includes('COMPANY MESSAGE')) {
+                    isParsing = false;
+                    resolve(table.getMatrix());
+                }
+
+                if (!isParsing) {
+                    return;
+                }
+
+                table.processItem(item);
+            }
+        });
     });
 }
 
@@ -110,7 +112,29 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
     return Promise.all(getSummaryOfMonthlyReports);
 }
 
+function parseFromMemory(buffers) {
+    const getSummaryOfMonthlyReports = buffers
+        .map(buffer => {
+            return getTable(buffer)
+                .then(table => {
+                    // remove outlier 'Gross'
+                    table.shift();
+
+                    // normalize
+                    let normalizedTable = table.map(row => row[0]);
+
+                    return {
+                        report: extractTransactions(normalizedTable)
+                    };
+                    // pprint(table);
+                });
+        });
+
+    return Promise.all(getSummaryOfMonthlyReports);
+}
+
 module.exports = {
     parseMorganStanleyReports,
+    parseFromMemory,
     MorganTransaction
 };
