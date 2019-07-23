@@ -1,4 +1,6 @@
-{
+const { generate } = require("./excelGenerator");
+
+const input = {
     "inputs": {
         "exchangeRate": 21.78,
         "esppDiscount": 10
@@ -33,5 +35,16 @@
         "amount": 41.02,
         "pricePerUnit": 13.07,
         "price": 536.1314
+    }],
+    "esppDividends": [{
+        "date": "2018-07-11",
+        "amount": 5,
+        "tax": 1.12
+    }, {
+        "date": "2018-09-30",
+        "amount": 6.66,
+        "tax": 3.33
     }]
-}
+};
+
+generate(input, "out/report.xlsx");
