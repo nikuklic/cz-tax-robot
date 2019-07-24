@@ -98,6 +98,10 @@ div.padded {
   border: 3px solid gray;
 }
 
+.div-disclaimer-bubble.blue {
+  background: #ceeaff;   
+}
+
 .div-disclaimer-bubble.red {
   background: red;   
   z-index: 1;

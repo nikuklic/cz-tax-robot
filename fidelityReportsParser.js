@@ -54,6 +54,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
 
         // this is a yearly report
         return {
+            periodIsWholeYear: true,
             period: fidelityReportLines[1],
             stocks: {
                 received: tofloat((dividendsAndStockIncome - dividendsIncome).toFixed(2))
@@ -72,6 +73,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
     const specialStockVests = getLocation('Securities Transferred In').nextFloat(1);
     const regularStockVests = getLocation('Other Activity In', 'Core Account and Credit Balance Cash Flow').nextFloat() - esppIncome;
 
+    const reportYear = fidelityReportLines[1].substr(-4);
     const reportSummary = {
         period: fidelityReportLines[1],
         stocks: {
@@ -91,7 +93,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
         const { nextString, nextFloat } = getLocation('MICROSOFT CORP ESPP###', 'Securities Bought & Sold');
 
         reportSummary.espp.list = [{ 
-            date: nextString(-1).trim(),
+            date: nextString(-1).trim() + `/${reportYear}`,
             quantity: nextFloat(3),
             price: nextFloat(4), 
             amount: negate(nextFloat(6))
@@ -106,7 +108,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
             
             reportSummary.stocks.list = reportSummary.stocks.list || [];
             reportSummary.stocks.list.push({
-                date: nextString(-1).trim(),
+                date: nextString(-1).trim() + `/${reportYear}`,
                 quantity: nextFloat(4),
                 price: nextFloat(5),
                 amount: tofloat((nextFloat(4) * nextFloat(5)).toFixed(2)),
@@ -120,7 +122,10 @@ const extractMeaningfulInformation = fidelityReportLines => {
 }
 
 const isFidelity = reportLines => {
-    const fidelity = reportLines.find(e => ~e.toLowerCase().indexOf('fidelity.com'));
+    const fidelity = reportLines.find(e => 
+        ~e.toLowerCase().indexOf('fidelity.com') ||
+        ~e.toLowerCase().indexOf('fidelity stock plan services llc')
+    );
     return !!fidelity;
 }
 

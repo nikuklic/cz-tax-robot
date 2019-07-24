@@ -5,6 +5,7 @@ const app = express()
 const port = process.env.port || process.env.PORT || 3000;
 const { generate } = require('./excelGenerator');
 const { parseFromMemory: parseFidelityFromMemory } = require('./fidelityReportsParser');
+const { translateFidelityReports } = require('./fidelityTranslator');
 const { parseFromMemory: parseMorganFromMemory  } = require('./morganStanleyParser');
 const { translateMorganStanleyReports  } = require('./morganStanleyTranslator');
 
@@ -62,6 +63,7 @@ const enqueueReportsProcessing = (files) => {
             })
             .then(() => {
                 const morganStanleyInput = translateMorganStanleyReports(report.output.morganStanley);
+                const fidelityInput = translateFidelityReports(report.output.fidelity);
                 const excelGeneratorInput = {                    
                     inputs: {
                         exchangeRate: 21.78,
@@ -69,39 +71,13 @@ const enqueueReportsProcessing = (files) => {
                     },
                     stocks: [
                         ...morganStanleyInput.stocks,
-                        ...report.output.fidelity
-                            .reduce((acc, e) => [
-                                ...acc, 
-                                ...(e.stocks.list || []).map(i => ({
-                                    date: i.date,
-                                    amount: i.quantity,
-                                    pricePerUnit: i.price,
-                                    price: i.amount
-                                }))], [])
+                        ...fidelityInput.stocks
                     ],
                     dividends: [
                         ...morganStanleyInput.dividends,
-                        ...report.output.fidelity
-                            .filter(e => e.dividends.received || e.dividends.taxesPaid)
-                            .map(e => ({
-                                date: e.dividends.date,
-                                amount: e.dividends.received,                            
-                                tax: e.dividends.taxesPaid
-                            }))
+                        ...fidelityInput.dividends
                     ],
-                    esppStocks: [
-                        ...report.output.fidelity
-                            .reduce((acc, e) => [
-                                ...acc,
-                                ...(e.espp.list || []).map(i => ({
-                                    date: i.date,
-                                    amount: i.quantity,
-                                    pricePerUnit: i.price,
-                                    price: i.amount
-                                }))
-                            ], [])
-                    ],
-                    esppDividends: []
+                    esppStocks: fidelityInput.esppStocks
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
@@ -190,7 +166,7 @@ app.get('/status/:token', (req, res) => {
 
 app.get('*', (req, res) => {    
     res.status(404);
-    res.sendFile(path.join(__dirname, './public/report-404.html'))    
+    res.sendFile(path.join(__dirname, './public/report-404.html'));
 });
 
 app.listen(port, () => {

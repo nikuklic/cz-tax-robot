@@ -55,6 +55,7 @@ UI.customalert = message => alert(message);
 UI.setupIndexPage = () => {
   const appDiv = document.getElementById("app");
   const form = document.getElementById("form");
+  const divBubble = document.querySelector('.div-disclaimer-bubble');
   const inputForManualSelect = document.getElementById("input-manualSelect");
 
   const fileLists = [];
@@ -103,6 +104,9 @@ UI.setupIndexPage = () => {
     input.type = "file";
     input.multiple = true;
     input.files = fileList;
+
+    divBubble.classList.add('blue');
+    divBubble.innerHTML = '<marquee>Uploading your documents..</marquee>';
 
     form.appendChild(input);
     form.submit();
