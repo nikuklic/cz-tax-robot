@@ -1,6 +1,15 @@
 const UI = {};
 
-UI.customalert = message => alert(message);
+UI.customalert = message => {
+  alert(message);
+  return;
+
+  const overlay = document.createElement('div');
+
+  overlay.className = 'modal-overlay centered-content';
+
+  document.body.appendChild(overlay);
+};
 
 UI.setupIndexPage = () => {
   const appDiv = document.getElementById("app");
@@ -15,7 +24,7 @@ UI.setupIndexPage = () => {
   });
 
   inputForManualSelect.addEventListener("change", () => {
-    form.submit();
+    registerNewFileList(inputForManualSelect.files);
   });
 
   document.addEventListener("dragover", e => {
@@ -69,6 +78,7 @@ UI.setupStatusPage = () => {
   const spanProgress = document.getElementById("span-progress");
 
   const state = {
+    done: false,
     detailsAreVisible: false
   };
 
@@ -94,15 +104,21 @@ UI.setupStatusPage = () => {
         return r.json();
       })
       .then(json => {
+        if (state.done) {
+          return;
+        }
+
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
 
+          state.done = true;
           divDownloads.style.display = 'block';
           aDownloadJson.href = location.href + "/json";
           aDownloadXlsx.href = location.href + "/xlsx";
           aDownloadXlsx.click();
         }
         if (json.status.aggregate === "failed") {
+          state.done = true;
           clearTimeout(updateInterval);
         }
 
@@ -110,5 +126,5 @@ UI.setupStatusPage = () => {
         preDetails.innerText = JSON.stringify(json, null, 2);
       })
       .catch(() => {});
-  }, 200);
+  }, 100);
 };
