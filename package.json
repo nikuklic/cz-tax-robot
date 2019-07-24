@@ -1,7 +1,7 @@
 {
   "name": "TaxRobot",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "repository": "https://garage-06.visualstudio.com/Tax%20Robot%201857%2083751/_git/Tax%20Robot%201857%2083751",
   "author": "Adrian Bosilca <adbosi@microsoft.com>",
   "license": "MIT",
