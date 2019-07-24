@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express')
 const upload = require('multer')();
+const uuidv4 = require('uuid/v4')
 const app = express()
 const port = process.env.port || process.env.PORT || 3000;
 const { generate } = require('./excelGenerator');
@@ -12,7 +13,7 @@ const { translateMorganStanleyReports  } = require('./morganStanleyTranslator');
 const processing_queue = {};
 const getReport = token => processing_queue[token];
 const enqueueReportsProcessing = (files) => {
-    const token = Date.now() + Math.random();
+    const token = uuidv4();
     const fileBuffers = files        
         .map(f => f.buffer);
 
