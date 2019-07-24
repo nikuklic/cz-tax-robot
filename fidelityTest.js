@@ -1,5 +1,5 @@
 const path = require('path');
-const { parseFidelityReports } = require('./fidelityMonthlyReportsParser');
+const { parseFidelityReports } = require('./fidelityReportsParser');
 
 (async function _() {
     const fidelityReportsDirectory = path.join(process.cwd(), process.argv[2] || './local/2018')

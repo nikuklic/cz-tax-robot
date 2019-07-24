@@ -78,6 +78,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
             received: specialStockVests + regularStockVests
         },
         dividends: {
+            date: fidelityReportLines[1].split(' - ')[1],
             received: getLocation('Total Dividends, Interest & Other Income').nextFloat(),
             taxesPaid: negate(getLocation('Total Federal Taxes Withheld').nextFloat())
         },

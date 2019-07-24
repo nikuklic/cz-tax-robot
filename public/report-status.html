@@ -8,9 +8,27 @@
     <div id="app">
         <h1>MDCP Tax Robot</h1>
         <h3>Print the downloaded spreadsheet and attach it to your tax form</h3>
-        <span id="span-progress">Status: getting the progress..</span>
-        <a id="a-download" download>download .XLSX</a>
-        <pre id="pre"></pre>
+        <div class="with-border">
+            <span id="span-progress">Status: getting the progress..</span>
+            <div id="div-downloads" style="display: none">
+                Download: 
+                <a id="a-download-xlsx" download>.XLSX</a> 
+                or
+                <a id="a-download-json" download>.JSON</a>
+            </div>
+
+            <div id="div-details">
+                Technical details: <a href="#" id="a-toggle-details">show</a>
+                <hr id="hr-pre" style="display: none"/>
+                <pre id="pre" style="display: none"></pre>
+            </div>
+        </div>
+        <div class="centered-content padded">
+            <div class="div-disclaimer-bubble">
+                <marquee>Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.</marquee>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/56/Cartoon_Robot.svg" width="300" />
+        </div>
     </div>
 </body>
 

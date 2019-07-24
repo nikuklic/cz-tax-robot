@@ -1,5 +1,7 @@
 const UI = {};
 
+UI.customalert = message => alert(message);
+
 UI.setupIndexPage = () => {
   const appDiv = document.getElementById("app");
   const form = document.getElementById("form");
@@ -42,6 +44,7 @@ UI.setupIndexPage = () => {
       f => f.type === "application/pdf"
     );
     if (!hasPdfFiles) {
+      UI.customalert('Is this a joke to you?! Gimme your PDFs.')
       return;
     }
 
@@ -57,9 +60,26 @@ UI.setupIndexPage = () => {
 };
 
 UI.setupStatusPage = () => {
-  const preDiv = document.getElementById("pre");
-  const aDownload = document.getElementById("a-download");
+  const preDetails = document.getElementById("pre");
+  const preHr = document.getElementById("hr-pre");
+  const aDownloadXlsx = document.getElementById("a-download-xlsx");
+  const aDownloadJson = document.getElementById("a-download-json");
+  const aToggleDetails = document.getElementById("a-toggle-details");
+  const divDownloads = document.getElementById("div-downloads");
   const spanProgress = document.getElementById("span-progress");
+
+  const state = {
+    detailsAreVisible: false
+  };
+
+  aToggleDetails.addEventListener("click", e => {
+    e.preventDefault();
+
+    state.detailsAreVisible = !state.detailsAreVisible;
+    aToggleDetails.innerText = state.detailsAreVisible ? 'hide' : 'show';
+    preDetails.style.display = state.detailsAreVisible ? 'block' : 'none';
+    preHr.style.display = state.detailsAreVisible ? 'block' : 'none';
+  });
 
   const updateInterval = setInterval(() => {
     fetch(location.href + "/json")
@@ -77,16 +97,18 @@ UI.setupStatusPage = () => {
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
 
-          aDownload.href = location.href + "/xlsx";
-          aDownload.click();
+          divDownloads.style.display = 'block';
+          aDownloadJson.href = location.href + "/json";
+          aDownloadXlsx.href = location.href + "/xlsx";
+          aDownloadXlsx.click();
         }
         if (json.status.aggregate === "failed") {
           clearTimeout(updateInterval);
         }
 
         spanProgress.innerHTML = `Status: ${json.status.aggregate}`;
-        preDiv.innerText = JSON.stringify(json, null, 2);
+        preDetails.innerText = JSON.stringify(json, null, 2);
       })
       .catch(() => {});
-  }, 500);
+  }, 200);
 };

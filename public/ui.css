@@ -6,7 +6,7 @@ body {
 }
 
 div {
-  margin: 5px;
+  
   position: relative;
 }
 
@@ -15,6 +15,15 @@ div.centered-content {
   align-content: center;
   justify-content: center;
   align-items: center;
+}
+
+div.with-border {
+  border: 5px dashed gray;
+  padding: 10px
+}
+
+div.padded {
+  padding: 10px
 }
 
 #app {
@@ -28,12 +37,7 @@ div.centered-content {
 }
 
 #app #dropzone {
-  border: 5px dashed gray;
   height: 200px;
-  top: 0px;
-  bottom: 0px;
-  left: 0px;
-  right: 0px;
 }
 
 #app .content {
@@ -69,7 +73,7 @@ form {
 
 .div-disclaimer-bubble {
   position: absolute;
-  top: 40px;
+  top: 50px;
   width: 200px;
   background: pink;
   padding: 10;
@@ -77,4 +81,9 @@ form {
   font-size: 1rem;
   left: 55%;
   border: 3px solid gray;
+}
+
+.div-disclaimer-bubble.red {
+  background: red;   
+  z-index: 1;
 }

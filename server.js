@@ -84,7 +84,7 @@ const enqueueReportsProcessing = (files) => {
                         ...report.output.fidelity
                             .filter(e => e.dividends.received || e.dividends.taxesPaid)
                             .map(e => ({
-                                date: '?',
+                                date: e.dividends.date,
                                 amount: e.dividends.received,                            
                                 tax: e.dividends.taxesPaid
                             }))
@@ -104,14 +104,12 @@ const enqueueReportsProcessing = (files) => {
                     esppDividends: []
                 };
 
-                //console.log(JSON.stringify(excelGeneratorInput));
-
+                report.output.excelRaw = excelGeneratorInput;
                 report.output.excel = generate(excelGeneratorInput);                
                 report.status.excel = 'done';
             })
             .catch(e => {
-                console.log('Error: ', !!e);
-                console.log('Error: ', !!e, e.toString());
+                console.log('Error: ', e);
 
                 report.status.excel = 'failed';
                 report.output.excel = e.message;
@@ -129,6 +127,12 @@ const enqueueReportsProcessing = (files) => {
     })
     .catch(e => {
         report.status.aggregate = 'failed';
+    })
+    .then(() => {
+        // cleanup the report after 15 minutes
+        setTimeout(() => {
+            delete processing_queue[token];
+        }, 15 * 60 * 1000)
     });
 
     return token;
@@ -157,7 +161,8 @@ app.get('/status/:token/json', (req, res) => {
             files: report.files.map(({ buffer, ...fileInfo}) => fileInfo),
             output: {
                 fidelity: report.output.fidelity,
-                morganStanley: report.output.morganStanley
+                morganStanley: report.output.morganStanley,
+                excelRaw: report.output.excelRaw
             }
         })    
     } else {
