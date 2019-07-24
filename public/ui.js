@@ -15,7 +15,7 @@ UI.init = () => {
   });
 
   const waitForConsole = () => {    
-    var devtools = function(){};    
+    const devtools = function () {};    
     devtools.toString = function() {
       this.opened = true;
     };
@@ -24,34 +24,33 @@ UI.init = () => {
     return waitFor(() => devtools.opened)
   }
   
-  const talkToTheUser = () => {
-    [
+  const talkToTheUser = messages => messages.reduce(
+    (chain, message) => chain.then(() => delay(1500 + 4 * Math.random())).then(() => console.log(message)),
+    Promise.resolve()
+  );
+
+  waitForConsole()
+    .then(() => talkToTheUser([
       'Hello..',
       'Looking at the console, huh?',
       'I must admit..',
       'As a robot, I do that as well sometimes',
       'Lots of funky stuff out there',
       'But my mom caught me once..',
-    ].reduce(
-      (chain, message) => chain.then(() => delay(1500 + 2 * Math.random())).then(() => console.log(message)),
-      Promise.resolve()
-    )
-  };
-
-  waitForConsole()
-    .then(() => talkToTheUser());
+      'Got me grounded for a month :('
+    ]))
+    .then(() => delay(10000))
+    .then(() => talkToTheUser([
+      'Oh wow...',
+      'You\'re still here?!',
+      'Good, keeping me company...',
+      'Whanna hear a joke?',
+      'P = NP',
+      'Not funny?.. Okay gonna shut up now'
+    ]));
 }
 
-UI.customalert = message => {
-  alert(message);
-  return;
-
-  const overlay = document.createElement('div');
-
-  overlay.className = 'modal-overlay centered-content';
-
-  document.body.appendChild(overlay);
-};
+UI.customalert = message => alert(message);
 
 UI.setupIndexPage = () => {
   const appDiv = document.getElementById("app");
@@ -95,7 +94,7 @@ UI.setupIndexPage = () => {
       f => f.type === "application/pdf"
     );
     if (!hasPdfFiles) {
-      UI.customalert('Is this a joke to you?! Gimme your PDFs.')
+      UI.customalert('Why are you trying to hurt me?\nI can only handle PDF files.')
       return;
     }
 
