@@ -11,7 +11,7 @@ const input = {
         "pricePerUnit": 90.14,
         "price": 1802.80
     }, {
-        "date": "2018-05-31",
+        "date": "2017-05-31",
         "amount": 50,
         "pricePerUnit": 98.84,
         "price": 4942.00
@@ -21,7 +21,7 @@ const input = {
         "amount": 20,
         "tax": 6.57
     }, {
-        "date": "2018-04-22",
+        "date": "2016-04-22",
         "amount": 33,
         "tax": 11.02
     }],
@@ -31,20 +31,12 @@ const input = {
         "pricePerUnit": 12.35,
         "price": 138.07
     }, {
-        "date": "2018-04-11",
+        "date": "2013-04-11",
         "amount": 41.02,
         "pricePerUnit": 13.07,
         "price": 536.1314
-    }],
-    "esppDividends": [{
-        "date": "2018-07-11",
-        "amount": 5,
-        "tax": 1.12
-    }, {
-        "date": "2018-09-30",
-        "amount": 6.66,
-        "tax": 3.33
     }]
 };
 
-generate(input, "out/report.xlsx");
+const wb = generate(input);
+wb.write("out/report.xlsx")
