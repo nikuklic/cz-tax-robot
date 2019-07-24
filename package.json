@@ -23,6 +23,6 @@
     "dev-web": "nodemon server.js"
   },
   "engines": {
-    "node": "8.11.1"
+    "node": "8.11.2"
   }
 }
