@@ -56,34 +56,89 @@ const YELLOW_TITLE = { ... YELLOW, ... TITLE };
 const BLUE_CZK = { ... BLUE, ... CZK };
 const BLUE_TITLE = { ... BLUE, ... TITLE };
 
+const EN = {
+    sheet: 'English',
+    inputs: 'Inputs',
+    exchangeRate: 'Exchange Rate',
+    esppDiscount: 'ESPP Discount',
+    stocksReceived: 'Stocks received',
+    date: 'Date',
+    amount: 'Amount',
+    pricePerUnitUSD: 'Price per Unit (USD)',
+    priceUSD: 'Price (USD)',
+    priceCZK: 'Price (CZK)',
+    total: 'Total',
+    dividendsReceived: 'Dividends received',
+    dividendsUSD: 'Dividends (USD)',
+    dividendsCZK: 'Dividends (CZK)',
+    taxUSD: 'Tax withheld (USD)',
+    taxCZK: 'Tax withheld (CZK)',
+    esppStocks: 'ESPP Stocks',
+    discount: 'Discount',
+    overallStocksCZK: 'Overall stocks acquired (CZK)',
+    overallDividendsCZK: 'Overall dividends acquired (CZK)',
+    overallTaxCZK: 'Dividend tax withheld (CZK)'
+};
+
+const CZ = {
+    sheet: 'Česky',
+    inputs: 'Vstupy',
+    exchangeRate: 'Kurz',
+    esppDiscount: 'Sleva pro ESPP',
+    stocksReceived: 'Nabytí akcií',
+    date: 'Datum',
+    amount: 'Počet',
+    pricePerUnitUSD: 'Cena za jednotku (USD)',
+    priceUSD: 'Cena (USD)',
+    priceCZK: 'Cena (CZK)',
+    total: 'Celkem',
+    dividendsReceived: 'Dividendy z držení akcií',
+    dividendsUSD: 'Dividendy (USD)',
+    dividendsCZK: 'Dividendy (CZK)',
+    taxUSD: 'Srážková daň (USD)',
+    taxCZK: 'Srážková daň (CZK)',
+    esppStocks: 'Nabyti akcií ESPP',
+    discount: 'Sleva',
+    overallStocksCZK: 'Nabyté akcie celkem (CZK)',
+    overallDividendsCZK: 'Dividendy z držení akcií celkem (CZK)',
+    overallTaxCZK: 'Srážková daň z dividendů (CZK)'
+};
+
 /**
  * @param {*} input
  * @return {xl.Workbook} Workbook
  */
 const generate = (input) => {
     const wb = new xl.Workbook();
-    const ws = wb.addWorksheet("Sheet 1", WORKSHEET_OPTIONS);
+    const en_ws = wb.addWorksheet(EN.sheet, WORKSHEET_OPTIONS);
+    populateWorksheet(en_ws, input, EN);
+    const cz_ws = wb.addWorksheet(CZ.sheet, WORKSHEET_OPTIONS);
+    populateWorksheet(cz_ws, input, CZ);
+    return wb;
+}
+
+const populateWorksheet = (ws, input, locale) => {
     let rowCursor = 1;
 
 
     // Inputs such as exchange rate USD to CZK
-    ws.cell(rowCursor + 0, 1).string("Inputs").style(TITLE);
-    ws.cell(rowCursor + 1, 1).string("Exchange rate");
+    ws.cell(rowCursor + 0, 1).string(locale.inputs).style(TITLE);
+    ws.cell(rowCursor + 1, 1).string(locale.exchangeRate);
     ws.cell(rowCursor + 1, 2).number(input.inputs.exchangeRate).style(CZK);
     const exchangeRate = xl.getExcelCellRef(rowCursor + 1, 2);
-    ws.cell(rowCursor + 2, 1).string("ESPP discount");
+    ws.cell(rowCursor + 2, 1).string(locale.esppDiscount);
     ws.cell(rowCursor + 2, 2).number(input.inputs.esppDiscount / 100).style(PERCENTAGE);
     const esppDiscount = xl.getExcelCellRef(rowCursor + 2, 2);
 
 
     // Stocks
     rowCursor += 2 + SKIP_ROW;
-    ws.cell(rowCursor + 0, 1).string("Stocks received").style(TITLE);
-    ws.cell(rowCursor + 1, 1).string("Date").style(HEADER);
-    ws.cell(rowCursor + 1, 2).string("Amount").style(HEADER);
-    ws.cell(rowCursor + 1, 3).string("Price per unit (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 4).string("Price (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 5).string("Price (CZK)").style(HEADER);
+    ws.cell(rowCursor + 0, 1).string(locale.stocksReceived).style(TITLE);
+    ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
+    ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
+    ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
 
     rowCursor += SKIP_HEADER;
     input.stocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
@@ -95,7 +150,7 @@ const generate = (input) => {
         ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
     });
 
-    ws.cell(rowCursor + input.stocks.length, 1).string("Total").style(YELLOW_TITLE);
+    ws.cell(rowCursor + input.stocks.length, 1).string(locale.total).style(YELLOW_TITLE);
     ws.cell(rowCursor + input.stocks.length, 2).style(YELLOW);
     ws.cell(rowCursor + input.stocks.length, 3).style(YELLOW);
     ws.cell(rowCursor + input.stocks.length, 4).style(YELLOW);
@@ -107,12 +162,12 @@ const generate = (input) => {
 
     // Stock dividends
     rowCursor += input.stocks.length + SKIP_ROW;
-    ws.cell(rowCursor + 0, 1).string("Dividends received").style(TITLE);
-    ws.cell(rowCursor + 1, 1).string("Date").style(HEADER);
-    ws.cell(rowCursor + 1, 2).string("Dividends (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 3).string("Dividends (CZK)").style(HEADER);
-    ws.cell(rowCursor + 1, 4).string("Tax withheld (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 5).string("Tax withheld (CZK)").style(HEADER);
+    ws.cell(rowCursor + 0, 1).string(locale.dividendsReceived).style(TITLE);
+    ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
+    ws.cell(rowCursor + 1, 2).string(locale.dividendsUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 3).string(locale.dividendsCZK).style(HEADER);
+    ws.cell(rowCursor + 1, 4).string(locale.taxUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 5).string(locale.taxCZK).style(HEADER);
 
     rowCursor += SKIP_HEADER;
     input.dividends.sort((a, b) => a.date.localeCompare(b.date)).forEach((d, i) => {
@@ -125,7 +180,7 @@ const generate = (input) => {
         ws.cell(rowCursor + i, 5).formula(`${tax}*${exchangeRate}`).style(CZK);
     });
 
-    ws.cell(rowCursor + input.dividends.length, 1).string("Total").style(YELLOW_TITLE);
+    ws.cell(rowCursor + input.dividends.length, 1).string(locale.total).style(YELLOW_TITLE);
     ws.cell(rowCursor + input.dividends.length, 2).style(YELLOW);
     const dividendsBegin = xl.getExcelCellRef(rowCursor, 3);
     const dividendsEnd = xl.getExcelCellRef(rowCursor + input.dividends.length - 1, 3);
@@ -140,12 +195,12 @@ const generate = (input) => {
 
     // ESPP
     rowCursor += input.dividends.length + 1 + SKIP_ROW;
-    ws.cell(rowCursor + 0, 1).string("ESPP Stocks").style(TITLE);
-    ws.cell(rowCursor + 1, 1).string("Date").style(HEADER);
-    ws.cell(rowCursor + 1, 2).string("Amount").style(HEADER);
-    ws.cell(rowCursor + 1, 3).string("Price per unit (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 4).string("Price (USD)").style(HEADER);
-    ws.cell(rowCursor + 1, 5).string("Price (CZK)").style(HEADER);
+    ws.cell(rowCursor + 0, 1).string(locale.esppStocks).style(TITLE);
+    ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
+    ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
+    ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
+    ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
 
     rowCursor += SKIP_HEADER;
     input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
@@ -157,7 +212,7 @@ const generate = (input) => {
         ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
     });
 
-    ws.cell(rowCursor + input.esppStocks.length, 1).string("Total").style(YELLOW_TITLE);
+    ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
     ws.cell(rowCursor + input.esppStocks.length, 2).style(YELLOW);
     ws.cell(rowCursor + input.esppStocks.length, 3).style(YELLOW);
     ws.cell(rowCursor + input.esppStocks.length, 4).style(YELLOW);
@@ -165,7 +220,7 @@ const generate = (input) => {
     const esppStockPriceEnd = xl.getExcelCellRef(rowCursor + input.esppStocks.length - 1, 5);
     ws.cell(rowCursor + input.esppStocks.length, 5).formula(`SUM(${esppStockPriceBegin}:${esppStockPriceEnd})`).style(YELLOW_CZK);
     const esppStockPriceSum = xl.getExcelCellRef(rowCursor + input.esppStocks.length, 5);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 1).string("Discount").style(YELLOW_TITLE);
+    ws.cell(rowCursor + input.esppStocks.length + 1, 1).string(locale.discount).style(YELLOW_TITLE);
     ws.cell(rowCursor + input.esppStocks.length + 1, 2).style(YELLOW);
     ws.cell(rowCursor + input.esppStocks.length + 1, 3).style(YELLOW);
     ws.cell(rowCursor + input.esppStocks.length + 1, 4).style(YELLOW);
@@ -174,15 +229,12 @@ const generate = (input) => {
 
 
     rowCursor += input.esppStocks.length + 1 + SKIP_ROW;
-    ws.cell(rowCursor + 0, 1).string("Overall stocks acquired (CZK)").style(BLUE_TITLE);
+    ws.cell(rowCursor + 0, 1).string(locale.overallStocksCZK).style(BLUE_TITLE);
     ws.cell(rowCursor + 0, 2).formula(`${stockPriceSumCzk}+${esppStockPriceDiscountSumCzk}`).style(BLUE_CZK);
-    ws.cell(rowCursor + 1, 1).string("Overall dividends acquired (CZK)").style(BLUE_TITLE);
+    ws.cell(rowCursor + 1, 1).string(locale.overallDividendsCZK).style(BLUE_TITLE);
     ws.cell(rowCursor + 1, 2).formula(`${dividendsPriceCzk}`).style(BLUE_CZK);
-    ws.cell(rowCursor + 2, 1).string("Dividend tax withheld (CZK)").style(BLUE_TITLE);
+    ws.cell(rowCursor + 2, 1).string(locale.overallTaxCZK).style(BLUE_TITLE);
     ws.cell(rowCursor + 2, 2).formula(`${dividendsTaxCzk}`).style(BLUE_CZK);
-
-
-    return wb;
 }
 
 module.exports = {
