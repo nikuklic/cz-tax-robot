@@ -188,6 +188,11 @@ app.get('/status/:token', (req, res) => {
     res.sendFile(path.join(__dirname, './public/report-status.html'))
 });
 
+app.get('*', (req, res) => {    
+    res.status(404);
+    res.sendFile(path.join(__dirname, './public/report-404.html'))    
+});
+
 app.listen(port, () => {
     console.log(`Your tax-robot web-ui is available at http://127.0.0.1:${port}`);
 });

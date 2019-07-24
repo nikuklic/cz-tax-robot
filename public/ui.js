@@ -1,5 +1,47 @@
 const UI = {};
 
+UI.init = () => {
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const waitFor = predicate => new Promise(resolve => {
+    const resolveOnPredicateSuccess = () => {
+      if (predicate()) {
+        return resolve() && true;
+      }
+
+      setTimeout(resolveOnPredicateSuccess, 1000);
+    }
+
+    resolveOnPredicateSuccess();
+  });
+
+  const waitForConsole = () => {    
+    var devtools = function(){};    
+    devtools.toString = function() {
+      this.opened = true;
+    };
+    console.log('%c', devtools);
+
+    return waitFor(() => devtools.opened)
+  }
+  
+  const talkToTheUser = () => {
+    [
+      'Hello..',
+      'Looking at the console, huh?',
+      'I must admit..',
+      'As a robot, I do that as well sometimes',
+      'Lots of funky stuff out there',
+      'But my mom caught me once..',
+    ].reduce(
+      (chain, message) => chain.then(() => delay(1500 + 2 * Math.random())).then(() => console.log(message)),
+      Promise.resolve()
+    )
+  };
+
+  waitForConsole()
+    .then(() => talkToTheUser());
+}
+
 UI.customalert = message => {
   alert(message);
   return;
@@ -128,3 +170,5 @@ UI.setupStatusPage = () => {
       .catch(() => {});
   }, 100);
 };
+
+UI.init();
