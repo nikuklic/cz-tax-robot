@@ -58,7 +58,7 @@ UI.setupIndexPage = () => {
   const divBubble = document.querySelector('.div-disclaimer-bubble');
   const inputForManualSelect = document.getElementById("input-manualSelect");
 
-  const fileLists = [];
+  let drag = 0;
 
   document.getElementById("dropzone").addEventListener("click", e => {
     e.preventDefault();
@@ -69,16 +69,25 @@ UI.setupIndexPage = () => {
     registerNewFileList(inputForManualSelect.files);
   });
 
-  document.addEventListener("dragover", e => {
+  document.addEventListener("dragenter", e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
 
+    ++drag;
     appDiv.classList.add("hovered");
   });
 
   document.addEventListener("dragleave", async e => {
     e.preventDefault();
-    appDiv.classList.remove("hovered");
+    
+    if (--drag === 0) {
+      appDiv.classList.remove("hovered");
+    }
+  });
+
+  document.addEventListener("dragover", e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
   });
 
   document.addEventListener("drop", async e => {
@@ -89,8 +98,6 @@ UI.setupIndexPage = () => {
   });
 
   function registerNewFileList(fileList) {
-    fileLists.push(fileList);
-
     const hasPdfFiles = Array.from(fileList).some(
       f => f.type === "application/pdf"
     );
