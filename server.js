@@ -2,11 +2,11 @@ const path = require('path');
 const express = require('express')
 const upload = require('multer')();
 const app = express()
-const port = process.env.port || 3000
-const { generate } = require('../excelGenerator');
-const { parseFromMemory: parseFidelityFromMemory } = require('../fidelityReportsParser');
-const { parseFromMemory: parseMorganFromMemory  } = require('../morganStanleyParser');
-const { translateMorganStanleyReports  } = require('../morganStanleyTranslator');
+const port = process.env.port || 3000;
+const { generate } = require('./excelGenerator');
+const { parseFromMemory: parseFidelityFromMemory } = require('./fidelityReportsParser');
+const { parseFromMemory: parseMorganFromMemory  } = require('./morganStanleyParser');
+const { translateMorganStanleyReports  } = require('./morganStanleyTranslator');
 
 const processing_queue = {};
 const getReport = token => processing_queue[token];

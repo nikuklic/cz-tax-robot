@@ -16,9 +16,13 @@
     "nodemon": "latest"
   },
   "scripts": {
-    "start": "node ./web/index.js",
+    "start": "node server.js",
+    "serve": "node server.js",
     "morgan": "node morganTest.js",
     "test-excel": "node excelTest.js",
-    "dev-web": "nodemon ./web/index.js"
+    "dev-web": "nodemon server.js"
+  },
+  "engines": {
+    "node": "8.11.1"
   }
 }
