@@ -6,16 +6,27 @@
 
 <body>
     <div id="app">
-        <div id="dropzone">
+        <h1>MDCP Tax Robot</h1>
+        <h3>Generate a summary of your Fidelity and MorganStanley reports</h3>
+        <div id="dropzone" class="centered-content">
             <div class="content hovered">
-                drop the Fidelity or MorganStanley .pdf reports here
+                drop it!
             </div>
             <div class="content">
-                drag any Fidelity or MorganStanley .pdf reports here
+                <span>drag all Fidelity or MorganStanley .pdf reports here</span><br />
+                or<br />
+                <span>click on this area to select them</span>
             </div>
+        </div> 
+        <div class="centered-content">
+            <div class="div-disclaimer-bubble">
+                <marquee>Disclaimer: I guarantee nothing</marquee>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/56/Cartoon_Robot.svg" width="300" />
         </div>
-        <form method="POST" enctype="multipart/form-data" id="form">
-            <input type="submit" value="Submit" />
+        <form method="POST" enctype="multipart/form-data" id="form">           
+            <input type="file" name="files" multiple id="input-manualSelect" /> 
+            <input type="submit" /> 
         </form>
     </div>
 </body>

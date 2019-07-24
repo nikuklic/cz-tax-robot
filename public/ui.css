@@ -1,11 +1,30 @@
+
+body {
+  background-color: beige;
+  font-family: "Verdana", cursive, sans-serif;
+  font-size: 1.5rem;
+}
+
 div {
   margin: 5px;
+  position: relative;
+}
+
+div.centered-content {
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
 }
 
 #app {
     max-width: 960px;
     margin-left: auto;
     margin-right: auto;
+}
+
+#app h1 {
+  text-decoration: blink;
 }
 
 #app #dropzone {
@@ -15,14 +34,15 @@ div {
   bottom: 0px;
   left: 0px;
   right: 0px;
-  display: flex;
-  align-content: center;
-  justify-content: center;
-  align-items: center;
 }
 
 #app .content {
   display: none;
+  text-align: center;
+}
+
+#app .content span {
+  font-weight: bold;
 }
 
 #app.hovered #dropzone {
@@ -41,4 +61,20 @@ div {
 
 #app.hovered #visualization {
   opacity: 0.2;
+}
+
+form {
+  display: none;
+}
+
+.div-disclaimer-bubble {
+  position: absolute;
+  top: 40px;
+  width: 200px;
+  background: pink;
+  padding: 10;
+  font-family: "Comic Sans MS";
+  font-size: 1rem;
+  left: 55%;
+  border: 3px solid gray;
 }
