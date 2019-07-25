@@ -14,8 +14,8 @@ const processing_queue = {};
 const getReport = token => processing_queue[token];
 const enqueueReportsProcessing = (files) => {
     const token = uuidv4();
-    const fileBuffers = files        
-        .map(f => f.buffer);
+    const fileBuffers = files.map(({ buffer }) => buffer);
+    const fileInfos = files.map(({ buffer, ...fileInfo }) => fileInfo);
 
     const report = processing_queue[token] = {
         startedAt: Date.now(),
@@ -30,7 +30,7 @@ const enqueueReportsProcessing = (files) => {
             morganStanley: { },
             excel: { }
         },
-        files: files
+        files: fileInfos
     };
     
     const processFidelityReports = fileBuffers => 
