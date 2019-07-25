@@ -65,6 +65,11 @@ UI.setupIndexPage = () => {
     inputForManualSelect.click();
   });
 
+  document.getElementById("a-selfhost").addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("div-selfhost").classList.toggle('hidden');
+  });
+
   inputForManualSelect.addEventListener("change", () => {
     registerNewFileList(inputForManualSelect.files);
   });
