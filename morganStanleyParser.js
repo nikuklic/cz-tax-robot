@@ -15,6 +15,7 @@ function getTable(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         let isParsing = false;
         let isMorgan = false;
+        let isStatement = false;
 
         const reader = new PdfReader();
         const parseFn = typeof pathOrBuffer === 'string'
@@ -31,6 +32,7 @@ function getTable(pathOrBuffer) {
                 }
 
                 if (item.text.includes('Transaction Date')) {
+                    isStatement = true;
                     isParsing = true;
                     table = new TableParser(); // new/clear table for next page
                 }
@@ -44,7 +46,7 @@ function getTable(pathOrBuffer) {
                     table.processItem(item);
                 }
             } else if (!item) {
-                if (!isMorgan) {
+                if (!isMorgan || !isStatement) {
                     reject('notMorgan');
                 } else {
                     reject('could not find any entries');
