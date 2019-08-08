@@ -37,7 +37,7 @@ function getTable(pathOrBuffer) {
                     table = new TableParser(); // new/clear table for next page
                 }
 
-                if (item.text.includes('COMPANY MESSAGE')) {
+                if (isParsing && (item.text.includes('COMPANY MESSAGE') || item.text.includes('continued'))) {
                     isParsing = false;
                     resolve(table.getMatrix());
                 }
@@ -97,6 +97,10 @@ function extractTransactions(table) {
         transactions.push(sanitizeTransaction(transaction));
     });
 
+    if (transactions.length === 0) {
+        throw `No transaction found for table with header: ${headers.map(entry => entry.text)}`
+    }
+
     return transactions;
 }
 
@@ -135,12 +139,8 @@ function parseFromMemory(buffers) {
                     // normalize
                     let normalizedTable = table.map(row => row[0]);
 
-                    const transactions = extractTransactions(normalizedTable);
-                    if (transactions.length === 0) {
-                        throw `No transaction found for table with header: ${normalizedTable[0].map(entry => entry.text)}`
-                    }
                     return {
-                        report: transactions
+                        report: extractTransactions(normalizedTable)
                     };
                 })
                 .catch(err => {
