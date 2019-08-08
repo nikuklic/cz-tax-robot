@@ -135,8 +135,12 @@ function parseFromMemory(buffers) {
                     // normalize
                     let normalizedTable = table.map(row => row[0]);
 
+                    const transactions = extractTransactions(normalizedTable);
+                    if (transactions.length === 0) {
+                        throw `No transaction found for table with header: ${normalizedTable[0].map(entry => entry.text)}`
+                    }
                     return {
-                        report: extractTransactions(normalizedTable)
+                        report: transactions
                     };
                 })
                 .catch(err => {

@@ -52,7 +52,7 @@ const enqueueReportsProcessing = (files) => {
             })
             .catch(e => {
                 report.status.morganStanley = 'failed';
-                report.output.morganStanley = e.message;
+                report.output.morganStanley = e;
 
                 throw e;
             });
