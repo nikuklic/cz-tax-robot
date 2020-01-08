@@ -23,6 +23,6 @@
     "test-excel": "node excelTest.js"
   },
   "engines": {
-    "node": "8.11.2"
+    "node": "10.17.0"
   }
 }
