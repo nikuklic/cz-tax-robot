@@ -4,7 +4,9 @@ const upload = require('multer')();
 const uuidv4 = require('uuid/v4')
 const app = express()
 const port = process.env.port || process.env.PORT || 3000;
+
 const { generate } = require('./excelGenerator');
+const { getExchangeRateForDay } = require('./utils/getExchangeRateForDay');
 const { parseFromMemory: parseFidelityFromMemory } = require('./fidelityReportsParser');
 const { translateFidelityReports } = require('./fidelityTranslator');
 const { parseFromMemory: parseMorganFromMemory  } = require('./morganStanleyParser');
@@ -67,7 +69,8 @@ const enqueueReportsProcessing = (files) => {
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
                 const excelGeneratorInput = {                    
                     inputs: {
-                        exchangeRate: 21.78,
+                        exchangeRate: 22.93,
+                        getExchangeRateForDay,
                         esppDiscount: 10,
                     },
                     stocks: [
