@@ -101,7 +101,7 @@ const CZ = {
     dividendsCZK: 'Dividendy (CZK)',
     taxUSD: 'Srážková daň (USD)',
     taxCZK: 'Srážková daň (CZK)',
-    esppStocks: 'Nabyti akcií ESPP',
+    esppStocks: 'Nabytí akcií ESPP',
     discount: 'Sleva',
     overallStocksCZK: 'Nabyté akcie celkem (CZK)',
     overallDividendsCZK: 'Dividendy z držení akcií celkem (CZK)',
@@ -228,48 +228,57 @@ const populateWorksheet = (ws, input, locale) => {
 
     // ESPP
     rowCursor += input.dividends.length + 1 + SKIP_ROW;
-    ws.cell(rowCursor + 0, 1).string(locale.esppStocks).style(TITLE);
-    ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
-    ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
-    ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
-    ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
-    ws.cell(rowCursor + 1, 5).string(locale.exchangeRateUSDCZK).style(HEADER);
-    ws.cell(rowCursor + 1, 6).string(locale.priceCZK).style(HEADER);
+    let esppStockPriceDiscountSumCzk;
+    if (input.esppStocks && input.esppStocks.length) {
+        ws.cell(rowCursor + 0, 1).string(locale.esppStocks).style(TITLE);
+        ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
+        ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
+        ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
+        ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
+        ws.cell(rowCursor + 1, 5).string(locale.exchangeRateUSDCZK).style(HEADER);
+        ws.cell(rowCursor + 1, 6).string(locale.priceCZK).style(HEADER);
 
-    rowCursor += SKIP_HEADER;
-    input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
-        ws.cell(rowCursor + i, 1).string(s.date);
-        ws.cell(rowCursor + i, 2).number(s.amount);
-        ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
-        ws.cell(rowCursor + i, 4).number(s.price).style(USD);        
-        ws.cell(rowCursor + i, 5).number(exchangeRateForStringDate(s.date)).style(CZK);
+        rowCursor += SKIP_HEADER;
+        input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
+            ws.cell(rowCursor + i, 1).string(s.date);
+            ws.cell(rowCursor + i, 2).number(s.amount);
+            ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
+            ws.cell(rowCursor + i, 4).number(s.price).style(USD);        
+            ws.cell(rowCursor + i, 5).number(exchangeRateForStringDate(s.date)).style(CZK);
 
-        const price = xl.getExcelCellRef(rowCursor + i, 4);
-        const exchangeRate = xl.getExcelCellRef(rowCursor + i, 5);
-        ws.cell(rowCursor + i, 6).formula(`${price}*${exchangeRate}`).style(CZK);
-    });
+            const price = xl.getExcelCellRef(rowCursor + i, 4);
+            const exchangeRate = xl.getExcelCellRef(rowCursor + i, 5);
+            ws.cell(rowCursor + i, 6).formula(`${price}*${exchangeRate}`).style(CZK);
+        });
 
-    ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
-    ws.cell(rowCursor + input.esppStocks.length, 2).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length, 3).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length, 4).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length, 5).style(YELLOW);
-    const esppStockPriceBegin = xl.getExcelCellRef(rowCursor, 6);
-    const esppStockPriceEnd = xl.getExcelCellRef(rowCursor + input.esppStocks.length - 1, 6);
-    ws.cell(rowCursor + input.esppStocks.length, 6).formula(`SUM(${esppStockPriceBegin}:${esppStockPriceEnd})`).style(YELLOW_CZK);
-    const esppStockPriceSum = xl.getExcelCellRef(rowCursor + input.esppStocks.length, 6);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 1).string(locale.discount).style(YELLOW_TITLE);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 2).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 3).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 4).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 5).style(YELLOW);
-    ws.cell(rowCursor + input.esppStocks.length + 1, 6).formula(`${esppStockPriceSum}*${esppDiscount}`).style(YELLOW_CZK);
-    const esppStockPriceDiscountSumCzk = xl.getExcelCellRef(rowCursor + input.esppStocks.length + 1, 6);
+        ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
+        ws.cell(rowCursor + input.esppStocks.length, 2).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length, 3).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length, 4).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length, 5).style(YELLOW);
+        const esppStockPriceBegin = xl.getExcelCellRef(rowCursor, 6);
+        const esppStockPriceEnd = xl.getExcelCellRef(rowCursor + input.esppStocks.length - 1, 6);
+        ws.cell(rowCursor + input.esppStocks.length, 6).formula(`SUM(${esppStockPriceBegin}:${esppStockPriceEnd})`).style(YELLOW_CZK);
+        const esppStockPriceSum = xl.getExcelCellRef(rowCursor + input.esppStocks.length, 6);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 1).string(locale.discount).style(YELLOW_TITLE);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 2).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 3).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 4).style(YELLOW);
 
+        ws.cell(rowCursor + input.esppStocks.length + 1, 5).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 6).formula(`${esppStockPriceSum}*${esppDiscount}`).style(YELLOW_CZK);
+        esppStockPriceDiscountSumCzk = xl.getExcelCellRef(rowCursor + input.esppStocks.length + 1, 6);
 
-    rowCursor += input.esppStocks.length + 1 + SKIP_ROW;
+        
+        rowCursor += input.esppStocks.length + 1 + SKIP_ROW;
+    }
+
+    
     ws.cell(rowCursor + 0, 1).string(locale.overallStocksCZK).style(BLUE_TITLE);
-    ws.cell(rowCursor + 0, 2).formula(`${stockPriceSumCzk}+${esppStockPriceDiscountSumCzk}`).style(BLUE_CZK);
+    ws.cell(rowCursor + 0, 2).formula(esppStockPriceDiscountSumCzk
+        ? `${stockPriceSumCzk}+${esppStockPriceDiscountSumCzk}`
+        : `${stockPriceSumCzk}`
+    ).style(BLUE_CZK);
     ws.cell(rowCursor + 1, 1).string(locale.overallDividendsCZK).style(BLUE_TITLE);
     ws.cell(rowCursor + 1, 2).formula(`${dividendsPriceCzk}`).style(BLUE_CZK);
     ws.cell(rowCursor + 2, 1).string(locale.overallTaxCZK).style(BLUE_TITLE);
