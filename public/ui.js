@@ -133,6 +133,7 @@ UI.setupStatusPage = () => {
   const aToggleDetails = document.getElementById("a-toggle-details");
   const divDownloads = document.getElementById("div-downloads");
   const spanProgress = document.getElementById("span-progress");
+  const yearWarning = document.getElementById("year-warning");
 
   const state = {
     done: false,
@@ -167,6 +168,10 @@ UI.setupStatusPage = () => {
 
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
+
+          if (json.status.yearWarning) {
+            yearWarning.style.display = 'block';
+          }
 
           state.done = true;
           divDownloads.style.display = 'block';

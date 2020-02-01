@@ -85,7 +85,8 @@ const enqueueReportsProcessing = (files) => {
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
-                report.output.excel = generate(excelGeneratorInput);                
+                report.output.excel = generate(excelGeneratorInput);
+                report.status.yearWarning = isYearWrong(excelGeneratorInput);
                 report.status.excel = 'done';
             })
             .catch(e => {
@@ -116,6 +117,16 @@ const enqueueReportsProcessing = (files) => {
     });
 
     return token;
+}
+
+function isYearWrong(excelRaw) {
+    let res = false;
+    [excelRaw.stocks, excelRaw.dividends, excelRaw.esppStocks].forEach(entries => {
+        if (entries.some(entry => !entry.date.includes('2019'))) {
+            res = true;
+        }
+    });
+    return res;
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
