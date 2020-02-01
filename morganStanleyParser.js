@@ -93,6 +93,9 @@ function extractTransactions(table) {
            });
            const headerName = header ? header.text.trim() : 'error';
            transaction[headerName] = sanitizeTextValue(entry.text);
+           if (headerName === MorganTransaction.date) {
+               transaction[headerName] = normalizeDate(transaction[headerName]);
+           }
        });
         transactions.push(sanitizeTransaction(transaction));
     });
@@ -102,6 +105,10 @@ function extractTransactions(table) {
     }
 
     return transactions;
+}
+
+function normalizeDate(shortDate) {
+    return shortDate.slice(0, 6) + '20' + shortDate.slice(6);
 }
 
 function parseMorganStanleyReports(absolutePathToReportsDirectory) {
