@@ -150,10 +150,10 @@ const populateWorksheet = (ws, input, locale) => {
     rowCursor += 2 + SKIP_ROW;
     ws.cell(rowCursor + 0, 1).string(locale.stocksReceived).style(TITLE);
     ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
-    ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
+    ws.cell(rowCursor + 1, 2).string(locale.exchangeRateUSDCZK).style(HEADER);
     ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
     ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
-    ws.cell(rowCursor + 1, 5).string(locale.exchangeRateUSDCZK).style(HEADER);    
+    ws.cell(rowCursor + 1, 5).string(locale.amount).style(HEADER);
     ws.cell(rowCursor + 1, 6).string(locale.priceCZK).style(HEADER);
 
     const exchangeRateForStringDate = dateString => {
@@ -168,13 +168,13 @@ const populateWorksheet = (ws, input, locale) => {
     rowCursor += SKIP_HEADER;
     input.stocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
         ws.cell(rowCursor + i, 1).string(s.date);
-        ws.cell(rowCursor + i, 2).number(s.amount);
+        ws.cell(rowCursor + i, 2).number(exchangeRateForStringDate(s.date)).style(CZK);
         ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
         ws.cell(rowCursor + i, 4).number(s.price).style(USD);        
-        ws.cell(rowCursor + i, 5).number(exchangeRateForStringDate(s.date)).style(CZK);
+        ws.cell(rowCursor + i, 5).number(s.amount);
 
         const price = xl.getExcelCellRef(rowCursor + i, 4);
-        const exchangeRate = xl.getExcelCellRef(rowCursor + i, 5);
+        const exchangeRate = xl.getExcelCellRef(rowCursor + i, 2);
         ws.cell(rowCursor + i, 6).formula(`${price}*${exchangeRate}`).style(CZK);
     });
 
@@ -232,22 +232,22 @@ const populateWorksheet = (ws, input, locale) => {
     if (input.esppStocks && input.esppStocks.length) {
         ws.cell(rowCursor + 0, 1).string(locale.esppStocks).style(TITLE);
         ws.cell(rowCursor + 1, 1).string(locale.date).style(HEADER);
-        ws.cell(rowCursor + 1, 2).string(locale.amount).style(HEADER);
+        ws.cell(rowCursor + 1, 2).string(locale.exchangeRateUSDCZK).style(HEADER);
         ws.cell(rowCursor + 1, 3).string(locale.pricePerUnitUSD).style(HEADER);
         ws.cell(rowCursor + 1, 4).string(locale.priceUSD).style(HEADER);
-        ws.cell(rowCursor + 1, 5).string(locale.exchangeRateUSDCZK).style(HEADER);
+        ws.cell(rowCursor + 1, 5).string(locale.amount).style(HEADER);
         ws.cell(rowCursor + 1, 6).string(locale.priceCZK).style(HEADER);
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
             ws.cell(rowCursor + i, 1).string(s.date);
-            ws.cell(rowCursor + i, 2).number(s.amount);
+            ws.cell(rowCursor + i, 2).number(exchangeRateForStringDate(s.date)).style(CZK);
             ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
             ws.cell(rowCursor + i, 4).number(s.price).style(USD);        
-            ws.cell(rowCursor + i, 5).number(exchangeRateForStringDate(s.date)).style(CZK);
+            ws.cell(rowCursor + i, 5).number(s.amount);
 
             const price = xl.getExcelCellRef(rowCursor + i, 4);
-            const exchangeRate = xl.getExcelCellRef(rowCursor + i, 5);
+            const exchangeRate = xl.getExcelCellRef(rowCursor + i, 2);
             ws.cell(rowCursor + i, 6).formula(`${price}*${exchangeRate}`).style(CZK);
         });
 

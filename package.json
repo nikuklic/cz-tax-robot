@@ -21,8 +21,5 @@
     "dev": "nodemon server.js",
     "morgan": "node morganTest.js",
     "test-excel": "node excelTest.js"
-  },
-  "engines": {
-    "node": "10.17.0"
   }
 }
