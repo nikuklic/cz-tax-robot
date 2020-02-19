@@ -1,19 +1,18 @@
 const UI = {};
-
-UI.init = () => {
-  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-  const waitFor = predicate => new Promise(resolve => {
-    const resolveOnPredicateSuccess = () => {
-      if (predicate()) {
-        return resolve() && true;
-      }
-
-      setTimeout(resolveOnPredicateSuccess, 1000);
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const waitFor = predicate => new Promise(resolve => {
+  const resolveOnPredicateSuccess = () => {
+    if (predicate()) {
+      return resolve() && true;
     }
 
-    resolveOnPredicateSuccess();
-  });
+    setTimeout(resolveOnPredicateSuccess, 1000);
+  }
 
+  resolveOnPredicateSuccess();
+});
+
+UI.init = () => {
   const waitForConsole = () => {    
     const devtools = function () {};    
     devtools.toString = function() {
@@ -189,6 +188,8 @@ UI.setupStatusPage = () => {
       })
       .catch(() => {});
   }, 100);
+
+  UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');  
 };
 
 UI.init();
