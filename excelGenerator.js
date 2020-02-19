@@ -274,7 +274,7 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + input.esppStocks.length + 1, 4).style(YELLOW);
 
         ws.cell(rowCursor + input.esppStocks.length + 1, 5).style(YELLOW);
-        ws.cell(rowCursor + input.esppStocks.length + 1, 6).formula(`(${esppStockPriceSum} + ${esppStockPriceSum}*${esppDiscount})*${esppDiscount}`).style(YELLOW_CZK);
+        ws.cell(rowCursor + input.esppStocks.length + 1, 6).formula(`${esppStockPriceSum} / (1 - ${esppDiscount}) * ${esppDiscount}`).style(YELLOW_CZK);
         esppStockPriceDiscountSumCzk = xl.getExcelCellRef(rowCursor + input.esppStocks.length + 1, 6);
 
         
