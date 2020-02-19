@@ -90,13 +90,16 @@ const extractMeaningfulInformation = fidelityReportLines => {
     }
 
     if (esppIncome) {
-        const { nextString, nextFloat } = getLocation('MICROSOFT CORP ESPP###', 'Securities Bought & Sold');
+        const { nextString, nextFloat } = getLocation('Employee Purchase', 'Employee Stock Purchase Summary');
+        
+        const price = tofloat(nextString(2).replace('$', ''));
+        const quantity = nextFloat(4);
 
         reportSummary.espp.list = [{ 
-            date: nextString(-1).trim() + `/${reportYear}`,
-            quantity: nextFloat(3),
-            price: nextFloat(4), 
-            amount: negate(nextFloat(6))
+            date: nextString(1).trim(),            
+            amount: quantity * price,
+            quantity,
+            price
         }];
     }
     
