@@ -184,7 +184,7 @@ UI.setupStatusPage = () => {
           divDownloads.style.display = 'block';
           aDownloadJson.href = location.href + "/json";
           aDownloadXlsx.href = location.href + "/xlsx";
-          downloadReport();
+          delay(100).then(downloadReport);
         }
 
         if (json.status.aggregate === "failed") {
