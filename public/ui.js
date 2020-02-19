@@ -148,6 +148,11 @@ UI.setupStatusPage = () => {
     preHr.style.display = state.detailsAreVisible ? 'block' : 'none';
   });
 
+  const downloadReport = () => {
+    UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');  
+    aDownloadXlsx.click();
+  };
+
   const updateInterval = setInterval(() => {
     fetch(location.href + "/json")
       .then(r => {
@@ -165,6 +170,9 @@ UI.setupStatusPage = () => {
           return;
         }
 
+        spanProgress.innerHTML = `Status: ${json.status.aggregate}`;
+        preDetails.innerText = JSON.stringify(json, null, 2);
+
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
 
@@ -176,20 +184,16 @@ UI.setupStatusPage = () => {
           divDownloads.style.display = 'block';
           aDownloadJson.href = location.href + "/json";
           aDownloadXlsx.href = location.href + "/xlsx";
-          aDownloadXlsx.click();
+          downloadReport();
         }
+
         if (json.status.aggregate === "failed") {
           state.done = true;
           clearTimeout(updateInterval);
         }
-
-        spanProgress.innerHTML = `Status: ${json.status.aggregate}`;
-        preDetails.innerText = JSON.stringify(json, null, 2);
       })
       .catch(() => {});
   }, 100);
-
-  UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');  
 };
 
 UI.init();
