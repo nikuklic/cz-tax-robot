@@ -119,17 +119,17 @@ const generate = (input) => {
     input.inputs.exchangeRateKind = 'fixed';
     populateWorksheet(en_ws, input, EN);    
         
-    const en_custom_ws = wb.addWorksheet(EN.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
-    input.inputs.exchangeRateKind = 'variable';
-    populateWorksheet(en_custom_ws, input, EN);    
+    // const en_custom_ws = wb.addWorksheet(EN.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
+    // input.inputs.exchangeRateKind = 'variable';
+    // populateWorksheet(en_custom_ws, input, EN);    
 
     const cz_ws = wb.addWorksheet(CZ.sheet, WORKSHEET_OPTIONS);
     input.inputs.exchangeRateKind = 'fixed';
     populateWorksheet(cz_ws, input, CZ);
     
-    const cz_custom_ws = wb.addWorksheet(CZ.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
-    input.inputs.exchangeRateKind = 'variable';
-    populateWorksheet(cz_custom_ws, input, CZ);    
+    // const cz_custom_ws = wb.addWorksheet(CZ.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
+    // input.inputs.exchangeRateKind = 'variable';
+    // populateWorksheet(cz_custom_ws, input, CZ);    
 
     return wb;
 }
