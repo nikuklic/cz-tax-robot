@@ -69,7 +69,7 @@ const extractMeaningfulInformation = fidelityReportLines => {
         }
     }
             
-    const esppIncome = negate(getLocation('Total Securities Bought').nextFloat(2));
+    const esppIncome = negate(getLocation('Total Securities Bought').nextFloat(2) || getLocation('Total Securities Bought').nextFloat(3));
     const specialStockVests = getLocation('Securities Transferred In').nextFloat(1);
     const regularStockVests = getLocation('Other Activity In', 'Core Account and Credit Balance Cash Flow').nextFloat() - esppIncome;
 
