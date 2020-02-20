@@ -133,6 +133,7 @@ UI.setupStatusPage = () => {
   const divDownloads = document.getElementById("div-downloads");
   const spanProgress = document.getElementById("span-progress");
   const yearWarning = document.getElementById("year-warning");
+  const esppWarning = document.getElementById("espp-warning");
 
   const state = {
     done: false,
@@ -179,6 +180,11 @@ UI.setupStatusPage = () => {
           if (json.status.yearWarning) {
             yearWarning.style.display = 'block';
           }
+		  
+		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {
+			esppWarning.style.display = 'block';
+			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2019 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
+		  }
 
           state.done = true;
           divDownloads.style.display = 'block';

@@ -87,6 +87,7 @@ const enqueueReportsProcessing = (files) => {
                 report.output.excelRaw = excelGeneratorInput;
                 report.output.excel = generate(excelGeneratorInput);
                 report.status.yearWarning = isYearWrong(excelGeneratorInput);
+				report.status.esppCount = getESPPCount(excelGeneratorInput);
                 report.status.excel = 'done';
             })
             .catch(e => {
@@ -117,6 +118,12 @@ const enqueueReportsProcessing = (files) => {
     });
 
     return token;
+}
+
+function getESPPCount(excelRaw) {
+    return excelRaw.esppStocks.reduce((acc, esppEntry) => {
+		return acc + (esppEntry.date.includes('2019') ? 1 : 0);
+	}, 0);
 }
 
 function isYearWrong(excelRaw) {
