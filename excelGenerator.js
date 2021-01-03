@@ -117,6 +117,8 @@ const CZ = {
     overallTaxCZK: 'Srážková daň z dividendů (CZK)'
 };
 
+const targetYear = '2020';
+
 /**
  * @param {*} input
  * @return {xl.Workbook} Workbook
@@ -175,7 +177,7 @@ const populateWorksheet = (ws, input, locale) => {
 
     rowCursor += SKIP_HEADER;
     input.stocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
-        ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf('2019') < 0 ? WARNING : {});
+        ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
         ws.cell(rowCursor + i, 2).number(exchangeRateForStringDate(s.date)).style(CZK);
         ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
         ws.cell(rowCursor + i, 4).number(s.price).style(USD);        
@@ -209,7 +211,7 @@ const populateWorksheet = (ws, input, locale) => {
 
     rowCursor += SKIP_HEADER;
     input.dividends.sort((a, b) => a.date.localeCompare(b.date)).forEach((d, i) => {
-        ws.cell(rowCursor + i, 1).string(d.date).style(d.date.indexOf('2019') < 0 ? WARNING : {});
+        ws.cell(rowCursor + i, 1).string(d.date).style(d.date.indexOf(targetYear) < 0 ? WARNING : {});
         ws.cell(rowCursor + i, 2).number(exchangeRateForStringDate(d.date)).style(CZK);
         const exchangeRate = xl.getExcelCellRef(rowCursor + i, 2);
         ws.cell(rowCursor + i, 3).number(d.amount).style(USD);
@@ -248,7 +250,7 @@ const populateWorksheet = (ws, input, locale) => {
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
-            ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf('2019') < 0 ? WARNING : {});
+            ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
             ws.cell(rowCursor + i, 2).number(exchangeRateForStringDate(s.date)).style(CZK);
             ws.cell(rowCursor + i, 3).number(s.pricePerUnit).style(USD);
             ws.cell(rowCursor + i, 4).number(s.price).style(USD);        

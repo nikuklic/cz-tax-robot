@@ -183,7 +183,7 @@ UI.setupStatusPage = () => {
 		  
 		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {
 			esppWarning.style.display = 'block';
-			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2019 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
+			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2020 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
 		  }
 
           state.done = true;

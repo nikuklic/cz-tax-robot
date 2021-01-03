@@ -69,7 +69,7 @@ const enqueueReportsProcessing = (files) => {
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
                 const excelGeneratorInput = {                    
                     inputs: {
-                        exchangeRate: 22.93,
+                        exchangeRate: 23.20,
                         getExchangeRateForDay,
                         esppDiscount: 10,
                     },
@@ -120,16 +120,18 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
+const targetYear = '2020';
+
 function getESPPCount(excelRaw) {
     return excelRaw.esppStocks.reduce((acc, esppEntry) => {
-		return acc + (esppEntry.date.includes('2019') ? 1 : 0);
+		return acc + (esppEntry.date.includes(targetYear) ? 1 : 0);
 	}, 0);
 }
 
 function isYearWrong(excelRaw) {
     let res = false;
     [excelRaw.stocks, excelRaw.dividends, excelRaw.esppStocks].forEach(entries => {
-        if (entries.some(entry => !entry.date.includes('2019'))) {
+        if (entries.some(entry => !entry.date.includes(targetYear))) {
             res = true;
         }
     });
