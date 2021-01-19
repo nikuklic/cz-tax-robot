@@ -69,7 +69,7 @@ const enqueueReportsProcessing = (files) => {
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
                 const excelGeneratorInput = {                    
                     inputs: {
-                        exchangeRate: 23.14
+                        exchangeRate: 23.14,
                         getExchangeRateForDay,
                         esppDiscount: 10,
                     },
