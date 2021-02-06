@@ -70,6 +70,7 @@ const enqueueReportsProcessing = (files) => {
                 const excelGeneratorInput = {                    
                     inputs: {
                         exchangeRate: 23.14,
+                        exchangeRateEur: 26.5,
                         getExchangeRateForDay,
                         esppDiscount: 10,
                     },

@@ -30,18 +30,21 @@ const translateFidelityReports = entries => {
                 date: yearlyReport.period,
                 amount: 1,
                 pricePerUnit: yearlyReport.stocks.received,
-                price: yearlyReport.stocks.received
+                price: yearlyReport.stocks.received,
+                source: 'Fidelity',
             }],
             dividends: [{
                 date: yearlyReport.period,
                 amount: yearlyReport.dividends.received,
                 tax: yearlyReport.dividends.taxesPaid,
+                source: 'Fidelity',
             }],
             esppStocks: [{
                 date: yearlyReport.period,
                 amount: 1,
                 pricePerUnit: yearlyReport.espp.bought,
-                price: yearlyReport.espp.bought
+                price: yearlyReport.espp.bought,
+                source: 'Fidelity',
             }]
         };
     }
@@ -54,7 +57,8 @@ const translateFidelityReports = entries => {
                 date: normalizeDate(i.date),
                 amount: i.quantity,
                 pricePerUnit: i.price,
-                price: i.amount
+                price: i.amount,
+                source: 'Fidelity',
             }))], []);
 
     const dividends = entries
@@ -62,7 +66,8 @@ const translateFidelityReports = entries => {
         .map(e => ({
             date: normalizeDate(e.dividends.date),
             amount: e.dividends.received,                            
-            tax: e.dividends.taxesPaid
+            tax: e.dividends.taxesPaid,
+            source: 'Fidelity',
         }))
 
     const esppStocks = entries
@@ -72,7 +77,8 @@ const translateFidelityReports = entries => {
                 date: normalizeDate(i.date),
                 amount: i.quantity,
                 pricePerUnit: i.price,
-                price: i.amount
+                price: i.amount,
+                source: 'Fidelity',
             }))
         ], []);
 

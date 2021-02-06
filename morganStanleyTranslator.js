@@ -15,7 +15,8 @@ function translateMorganStanleyReports(morganStanleyReports) {
             'date': transaction[MorganTransaction.date],
             'amount': transaction[MorganTransaction.amount],
             'pricePerUnit': transaction[MorganTransaction.price],
-            'price': transaction[MorganTransaction.price] * transaction[MorganTransaction.amount]
+            'price': transaction[MorganTransaction.price] * transaction[MorganTransaction.amount],
+            'source': 'Morgan Stanley',
         }
     });
 
@@ -23,7 +24,8 @@ function translateMorganStanleyReports(morganStanleyReports) {
         return {
             'date': transaction[MorganTransaction.date],
             'amount': transaction[MorganTransaction.netAmount],
-            'tax': getTaxWithheld(taxTransactions, transaction[MorganTransaction.date])
+            'tax': getTaxWithheld(taxTransactions, transaction[MorganTransaction.date]),
+            'source': 'Morgan Stanley',
         }
     });
 
