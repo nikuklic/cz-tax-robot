@@ -54,6 +54,10 @@ const USD = {
     numberFormat: '[$$-en-US]#,##0.00'
 };
 
+const EUR = {
+    numberFormat: '[$€-x-euro2]#,##0.00'
+};
+
 const WORKSHEET_OPTIONS = {
     sheetFormat: {
         baseColWidth: 20
@@ -81,9 +85,9 @@ const EN = {
     priceCZK: 'Price (CZK)',
     total: 'Total',
     dividendsReceived: 'Dividends received',
-    dividendsUSD: 'Dividends (USD)',
+    dividendsUSD: 'Dividends',
     dividendsCZK: 'Dividends (CZK)',
-    taxUSD: 'Tax withheld (USD)',
+    taxUSD: 'Tax withheld',
     taxCZK: 'Tax withheld (CZK)',
     esppStocks: 'ESPP Stocks',
     discount: 'Discounted',
@@ -109,9 +113,9 @@ const CZ = {
     priceCZK: 'Cena (CZK)',
     total: 'Celkem',
     dividendsReceived: 'Dividendy z držení akcií',
-    dividendsUSD: 'Dividendy (USD)',
+    dividendsUSD: 'Dividendy',
     dividendsCZK: 'Dividendy (CZK)',
-    taxUSD: 'Srážková daň (USD)',
+    taxUSD: 'Srážková daň',
     taxCZK: 'Srážková daň (CZK)',
     esppStocks: 'Nabytí akcií ESPP',
     discount: 'Sleva',
@@ -201,8 +205,9 @@ const populateWorksheet = (ws, input, locale) => {
     rowCursor += SKIP_HEADER;
     input.stocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
         ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
-        ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(USD);
-        ws.cell(rowCursor + i, 3).number(s.price).style(USD);
+        const style = s.source === 'Degiro' ? EUR : USD;
+        ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
+        ws.cell(rowCursor + i, 3).number(s.price).style(style);
         ws.cell(rowCursor + i, 4).number(s.amount);
 
         const price = xl.getExcelCellRef(rowCursor + i, 3);
@@ -235,10 +240,11 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + i, 1).string(d.date).style(d.date.indexOf(targetYear) < 0 ? WARNING : {});
         ws.cell(rowCursor + i, 2).string(d.source);
         const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForSource(d.source));
-        ws.cell(rowCursor + i, 3).number(d.amount).style(USD);
+        const style = d.source === 'Degiro' ? EUR : USD;
+        ws.cell(rowCursor + i, 3).number(d.amount).style(style);
         const dividends = xl.getExcelCellRef(rowCursor + i, 3);
         ws.cell(rowCursor + i, 4).formula(`${dividends}*${exchangeRate}`).style(CZK);
-        ws.cell(rowCursor + i, 5).number(d.tax).style(USD);
+        ws.cell(rowCursor + i, 5).number(d.tax).style(style);
         const tax = xl.getExcelCellRef(rowCursor + i, 5);
         ws.cell(rowCursor + i, 6).formula(`${tax}*${exchangeRate}`).style(CZK);
     });
@@ -271,8 +277,9 @@ const populateWorksheet = (ws, input, locale) => {
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
             ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
-            ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(USD);
-            ws.cell(rowCursor + i, 3).number(s.price).style(USD);
+            const style = s.source === 'Degiro' ? EUR : USD;
+            ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
+            ws.cell(rowCursor + i, 3).number(s.price).style(style);
             ws.cell(rowCursor + i, 4).number(s.amount);
 
             const price = xl.getExcelCellRef(rowCursor + i, 3);

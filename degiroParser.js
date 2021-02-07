@@ -3,19 +3,19 @@ const { PdfReader, TableParser } = require("pdfreader");
 const fs = require("fs");
 
 const alignmentTolerance = 3;
-const MorganTransaction = {
-    type: 'Activity Type',
-    date: 'Transaction Date',
-    amount: 'Quantity',
-    price: 'Price',
-    netAmount: 'Net Amount'
+const DegiroTransaction = {
+    country: 'Country',
+    grossDividend: 'Gross dividend',
+    withholdingTax: 'Withholding Tax',
+    netDividend: 'Net dividend'
 };
 
 function getTable(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         let isParsing = false;
-        let isMorgan = false;
+        let isDegiro = false;
         let isStatement = false;
+        let table;
 
         const reader = new PdfReader();
         const parseFn = typeof pathOrBuffer === 'string'
@@ -27,17 +27,17 @@ function getTable(pathOrBuffer) {
                 reject(err);
                 console.error(err);
             } else if (item && item.text) {
-                if (item.text.toLowerCase().includes('morgan stanley smith barney')) {
-                    isMorgan = true;
+                if (item.text.toLowerCase().includes('date range from 1 January up to and including 31 December'.toLowerCase())) {
+                    isDegiro = true;
                 }
 
-                if (isMorgan && item.text.includes('Transaction Date')) {
+                if (isDegiro && item.text.includes('Country')) {
                     isStatement = true;
                     isParsing = true;
                     table = new TableParser(); // new/clear table for next page
                 }
 
-                if (isParsing && (item.text.includes('COMPANY MESSAGE') || item.text.includes('continued'))) {
+                if (isParsing && item.text.includes('Coupon overview in EUR')) {
                     isParsing = false;
                     resolve(table.getMatrix());
                 }
@@ -46,8 +46,8 @@ function getTable(pathOrBuffer) {
                     table.processItem(item);
                 }
             } else if (!item) {
-                if (!isMorgan || !isStatement) {
-                    reject('notMorgan');
+                if (!isDegiro || !isStatement) {
+                    reject('notDegiro');
                 } else {
                     reject('could not find any entries');
                 }
@@ -68,9 +68,11 @@ function sanitizeTextValue(text) {
 }
 
 function sanitizeTransaction(transaction) {
-    [MorganTransaction.netAmount, MorganTransaction.amount, MorganTransaction.price].forEach(property => {
-        if (transaction[property]) {
-            transaction[property] = parseFloat(transaction[property])
+    [DegiroTransaction.grossDividend, DegiroTransaction.netDividend, DegiroTransaction.withholdingTax].forEach(property => {
+        let value = transaction[property];
+        if (value) {
+            value = value.split(',').join('');
+            transaction[property] = parseFloat(value);
         }
     });
 
@@ -93,9 +95,6 @@ function extractTransactions(table) {
            });
            const headerName = header ? header.text.trim() : 'error';
            transaction[headerName] = sanitizeTextValue(entry.text);
-           if (headerName === MorganTransaction.date) {
-               transaction[headerName] = normalizeDate(transaction[headerName]);
-           }
        });
         transactions.push(sanitizeTransaction(transaction));
     });
@@ -104,6 +103,7 @@ function extractTransactions(table) {
         throw `No transaction found for table with header: ${headers.map(entry => entry.text)}`
     }
 
+    transactions.pop(); // remove duplicated line
     return transactions;
 }
 
@@ -151,7 +151,7 @@ function parseFromMemory(buffers) {
                     };
                 })
                 .catch(err => {
-                    if (err === 'notMorgan') {
+                    if (err === 'notDegiro') {
                         return
                     }
                     throw err;
@@ -165,5 +165,5 @@ function parseFromMemory(buffers) {
 module.exports = {
     parseMorganStanleyReports,
     parseFromMemory,
-    MorganTransaction
+    DegiroTransaction
 };
