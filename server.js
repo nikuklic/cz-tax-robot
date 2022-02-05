@@ -38,9 +38,9 @@ const enqueueReportsProcessing = (files) => {
         },
         files: fileInfos
     };
-    
-    const processFidelityReports = fileBuffers => 
-        Promise.resolve()        
+
+    const processFidelityReports = fileBuffers =>
+        Promise.resolve()
             .then(() => report.status.fidelity = 'parsing')
             .then(() => parseFidelityFromMemory(fileBuffers))
             .then(json => {
@@ -48,7 +48,7 @@ const enqueueReportsProcessing = (files) => {
                 report.output.fidelity = json;
             });
 
-    const processMorganStanleyReports = fileBuffers => 
+    const processMorganStanleyReports = fileBuffers =>
         Promise.resolve()
             .then(() => report.status.morganStanley = 'parsing')
             .then(() => parseMorganFromMemory(fileBuffers))
@@ -79,7 +79,7 @@ const enqueueReportsProcessing = (files) => {
                 throw e;
             });
 
-    const generateExcel = () => 
+    const generateExcel = () =>
         Promise.resolve()
             .then(() => {
                 report.status.excel = 'generating-excel';
@@ -88,10 +88,10 @@ const enqueueReportsProcessing = (files) => {
                 const morganStanleyInput = translateMorganStanleyReports(report.output.morganStanley);
                 const degiroInput = translateDegiroReports(report.output.degiro);
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
-                const excelGeneratorInput = {                    
+                const excelGeneratorInput = {
                     inputs: {
-                        exchangeRate: 23.14,
-                        exchangeRateEur: 26.5,
+                        exchangeRate: 21.72,
+                        exchangeRateEur: 25.65,
                         getExchangeRateForDay,
                         esppDiscount: 10,
                     },
@@ -120,14 +120,14 @@ const enqueueReportsProcessing = (files) => {
                 report.output.excel = e.message;
 
                 throw e;
-            });            
+            });
 
     Promise.all([
         processFidelityReports(fileBuffers),
         processMorganStanleyReports(fileBuffers),
         processDegiroReports(fileBuffers)
     ])
-    .then(() => generateExcel())    
+    .then(() => generateExcel())
     .then(() => {
         report.status.aggregate = 'done';
     })
@@ -144,7 +144,7 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const targetYear = '2020';
+const targetYear = '2021';
 
 function getESPPCount(excelRaw) {
     return excelRaw.esppStocks.reduce((acc, esppEntry) => {
@@ -166,7 +166,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, './public/index.html'))
 });
-app.post('/', upload.array('files'), (req, res) => {    
+app.post('/', upload.array('files'), (req, res) => {
     const uniquePdfs = new Map(req.files
         .filter(f => f.mimetype === 'application/pdf')
         .map(f => [f.originalname + f.size, f])
@@ -189,7 +189,7 @@ app.get('/status/:token/json', (req, res) => {
                 degiro: report.output.degiro,
                 excelRaw: report.output.excelRaw
             }
-        })    
+        })
     } else {
         res.status(404);
     }
@@ -213,7 +213,7 @@ app.get('/status/:token', (req, res) => {
     res.sendFile(path.join(__dirname, './public/report-status.html'))
 });
 
-app.get('*', (req, res) => {    
+app.get('*', (req, res) => {
     res.status(404);
     res.sendFile(path.join(__dirname, './public/report-404.html'));
 });

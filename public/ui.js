@@ -13,8 +13,8 @@ const waitFor = predicate => new Promise(resolve => {
 });
 
 UI.init = () => {
-  const waitForConsole = () => {    
-    const devtools = function () {};    
+  const waitForConsole = () => {
+    const devtools = function () {};
     devtools.toString = function() {
       this.opened = true;
     };
@@ -22,7 +22,7 @@ UI.init = () => {
 
     return waitFor(() => devtools.opened)
   }
-  
+
   const talkToTheUser = messages => messages.reduce(
     (chain, message) => chain.then(() => delay(1500 + 4 * Math.random())).then(() => console.log(message)),
     Promise.resolve()
@@ -83,7 +83,7 @@ UI.setupIndexPage = () => {
 
   document.addEventListener("dragleave", async e => {
     e.preventDefault();
-    
+
     if (--drag === 0) {
       appDiv.classList.remove("hovered");
     }
@@ -150,7 +150,7 @@ UI.setupStatusPage = () => {
   });
 
   const downloadReport = () => {
-    UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');  
+    UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');
     aDownloadXlsx.click();
   };
 
@@ -180,10 +180,10 @@ UI.setupStatusPage = () => {
           if (json.status.yearWarning) {
             yearWarning.style.display = 'block';
           }
-		  
+
 		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {
 			esppWarning.style.display = 'block';
-			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2020 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
+			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2021 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
 		  }
 
           state.done = true;
