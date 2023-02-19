@@ -9,7 +9,7 @@ function translateDegiroReports(degiroReports) {
 
     const normalizedDividends = dividendTransactions.map(transaction => {
         return {
-            'date': '12-31-2021',
+            'date': '12-31-2022',
             'amount': transaction[DegiroTransaction.grossDividend],
             'tax': transaction[DegiroTransaction.withholdingTax],
             'source': 'Degiro',

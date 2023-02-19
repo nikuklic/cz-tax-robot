@@ -125,7 +125,7 @@ const CZ = {
     source: 'Zdroj',
 };
 
-const targetYear = '2021';
+const targetYear = '2022';
 
 /**
  * @param {*} input
