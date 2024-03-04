@@ -68,6 +68,9 @@ const extractMeaningfulInformation = fidelityReportLines => {
             }
         }
     }
+
+    // Fidelity removed the Core Account Cash Flow table from statements beginning in October 2023
+    const oldForm = getLocation('Core Account and Credit Balance Cash Flow').exists()
             
     const esppIncome = negate(getLocation('Total Securities Bought').nextFloat(2) || getLocation('Total Securities Bought').nextFloat(3));
     const specialStockVests = getLocation('Securities Transferred In').nextFloat(1);
@@ -103,19 +106,24 @@ const extractMeaningfulInformation = fidelityReportLines => {
         }];
     }
     
-    if (specialStockVests || regularStockVests) {
+    if (specialStockVests || regularStockVests || (!oldForm && getLocation('MICROSOFT CORP SHARES DEPOSITED').exists())) {
         let location = getLocation('MICROSOFT CORP SHARES DEPOSITED');  
 
         while (location.exists()) {
             const { nextString, nextFloat } = location;
             
+            const amount = tofloat((nextFloat(4) * nextFloat(5)).toFixed(2));
             reportSummary.stocks.list = reportSummary.stocks.list || [];
             reportSummary.stocks.list.push({
                 date: nextString(-1).trim() + `/${reportYear}`,
                 quantity: nextFloat(4),
                 price: nextFloat(5),
-                amount: tofloat((nextFloat(4) * nextFloat(5)).toFixed(2)),
+                amount,
             });
+
+            if (!oldForm) {
+                reportSummary.stocks.received += amount;
+            }
 
             location = location.next();
         }

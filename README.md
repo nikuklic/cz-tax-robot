@@ -1,7 +1,7 @@
 # Usage
 
 To use the Tax Robot you can choose between:
-- using a hosted version at https://mdcp-tax-robot.azurewebsites.net/
+- using a hosted version at https://tax-robot.azurewebsites.net/
 - self-hosting it on your own machine
 
 ## Self-hosting the Tax Robot
