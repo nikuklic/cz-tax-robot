@@ -1,0 +1,7 @@
+.idea
+.vscode
+node_modules
+local
+out
+out.txt
+yarn-error.log

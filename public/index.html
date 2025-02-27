@@ -1,0 +1,56 @@
+<html>
+
+<head>
+    <title>MDCP Tax Robot</title>
+    <link rel="stylesheet" media="screen" href="/ui.css">
+</head>
+
+<body>
+    <div id="app">
+        <h1>MDCP Tax Robot</h1>
+        <h3>Generate a summary of your Fidelity and MorganStanley reports</h3>
+        <div id="dropzone" class="centered-content with-border">
+            <div class="content hovered shake-slow shake-constant">
+                drop it like it's hot!
+            </div>
+            <div class="content">
+                <span>drag all Fidelity or MorganStanley .pdf reports here</span><br />
+                or<br />
+                <span>click on this area to select them</span>
+            </div>
+        </div> 
+        <div class="centered-content column padded">
+            <div class="div-disclaimer-bubble">
+                <marquee>Disclaimer: I am not responsible if this is wrong</marquee>
+            </div>
+            <div>
+                <img src="/robot.svg" width="300" />
+            </div>
+            <br />
+            
+            <div>don't trust me? ¯\_(ツ)_/¯</div>
+            <div><a href="#" id="a-selfhost">self-host it!</a></div>
+            <div id="div-selfhost" class="hidden">
+<pre>
+git clone https://garage-06.visualstudio.com/Tax%20Robot%201857%2083751/_git/Tax%20Robot%201857%2083751 mdcp-tax-robot
+cd mdcp-tax-robot
+npm i
+npm start
+</pre>
+            </div>
+        
+            
+        </div>
+        <form method="POST" enctype="multipart/form-data" id="form" class="hidden">
+            <input type="submit" /> 
+        </form>
+        <input type="file" name="files" multiple id="input-manualSelect" class="hidden" /> 
+    </div>
+</body>
+
+<script src="/ui.js"></script>
+<script>
+    UI.setupIndexPage();    
+</script>
+
+</html>
