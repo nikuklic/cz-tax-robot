@@ -8,10 +8,10 @@ To use the Tax Robot you can choose between:
 
 To self host the Tax Robot on your own machine run the following commands in your terminal
 ```
-git clone https://garage-06.visualstudio.com/Tax%20Robot%201857%2083751/_git/Tax%20Robot%201857%2083751 mdcp-tax-robot
+git clone https://github.com/nikuklic/cz-tax-robot.git mdcp-tax-robot
 cd mdcp-tax-robot
-npm i
-npm start
+yarn install
+yarn start
 ```
 
 # Known issues/limitations
