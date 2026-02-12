@@ -84,7 +84,9 @@ const extractMeaningfulInformation = fidelityReportLines => {
         },
         dividends: {
             date: fidelityReportLines[1].split(' - ')[1],
-            received: getLocation('Total Dividends, Interest & Other Income').nextFloat(),
+            // Read gross dividend from "Dividends" section (value 2 positions before label)
+            // This is the taxable amount before withholding, which gets reinvested
+            received: getLocation('Dividends').nextFloat(-2),
             taxesPaid: negate(getLocation('Total Federal Taxes Withheld').nextFloat())
         },
         espp: {
