@@ -84,7 +84,9 @@ const extractMeaningfulInformation = fidelityReportLines => {
         },
         dividends: {
             date: fidelityReportLines[1].split(' - ')[1],
-            received: getLocation('Total Dividends, Interest & Other Income').nextFloat(),
+            // Read gross dividend from "Dividends" section (value 2 positions before label)
+            // This is the taxable amount before withholding, which gets reinvested
+            received: getLocation('Dividends').nextFloat(-2),
             taxesPaid: negate(getLocation('Total Federal Taxes Withheld').nextFloat())
         },
         espp: {
@@ -107,17 +109,32 @@ const extractMeaningfulInformation = fidelityReportLines => {
     }
     
     if (specialStockVests || regularStockVests || (!oldForm && getLocation('MICROSOFT CORP SHARES DEPOSITED').exists())) {
-        let location = getLocation('MICROSOFT CORP SHARES DEPOSITED');  
+        let location = getLocation('MICROSOFT CORP SHARES DEPOSITED');
+
+        // Detect format version by checking for "VALUE OF TRANSACTION" text
+        // Note: uses find() because the text is part of a longer line, not a standalone field
+        const hasValueOfTransactionLabel = !!fidelityReportLines.find(line =>
+            line.includes('VALUE OF TRANSACTION'));
+
+        // New format (2025+): offsets shifted by -1 due to removed "VALUE OF TRANSACTION" line
+        const quantityOffset = hasValueOfTransactionLabel ? 4 : 3;
+        const priceOffset = hasValueOfTransactionLabel ? 5 : 4;
+        const amountOffset = hasValueOfTransactionLabel ? null : 5;
 
         while (location.exists()) {
             const { nextString, nextFloat } = location;
-            
-            const amount = tofloat((nextFloat(4) * nextFloat(5)).toFixed(2));
+
+            const quantity = nextFloat(quantityOffset);
+            const price = nextFloat(priceOffset);
+            const amount = amountOffset
+                ? nextFloat(amountOffset)
+                : tofloat((quantity * price).toFixed(2));
+
             reportSummary.stocks.list = reportSummary.stocks.list || [];
             reportSummary.stocks.list.push({
                 date: nextString(-1).trim() + `/${reportYear}`,
-                quantity: nextFloat(4),
-                price: nextFloat(5),
+                quantity,
+                price,
                 amount,
             });
 

@@ -90,8 +90,8 @@ const enqueueReportsProcessing = (files) => {
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
                 const excelGeneratorInput = {
                     inputs: {
-                        exchangeRate: 23.28,
-                        exchangeRateEur: 25.16,
+                        exchangeRate: 21.84,
+                        exchangeRateEur: 24.66,
                         getExchangeRateForDay,
                         esppDiscount: 10,
                     },
@@ -144,7 +144,7 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const targetYear = '2024';
+const targetYear = '2025';
 
 function getESPPCount(excelRaw) {
     return excelRaw.esppStocks.reduce((acc, esppEntry) => {
