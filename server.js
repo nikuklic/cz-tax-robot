@@ -11,6 +11,8 @@ const { parseFromMemory: parseFidelityFromMemory } = require('./fidelityReportsP
 const { translateFidelityReports } = require('./fidelityTranslator');
 const { parseFromMemory: parseMorganFromMemory  } = require('./morganStanleyParser');
 const { translateMorganStanleyReports  } = require('./morganStanleyTranslator');
+const { parseFromMemory: parseMorganNewFromMemory } = require('./morganStanleyNewParser');
+const { translateMorganStanleyNewReports } = require('./morganStanleyNewTranslator');
 const { parseFromMemory: parseDegiroFromMemory  } = require('./degiroParser');
 const { translateDegiroReports  } = require('./degiroTranslator');
 
@@ -26,6 +28,7 @@ const enqueueReportsProcessing = (files) => {
         status: {
             fidelity: 'none',
             morganStanley: 'none',
+            morganStanleyNew: 'none',
             degiro: 'none',
             excel: 'waiting',
             aggregate: 'in-progress'
@@ -33,6 +36,7 @@ const enqueueReportsProcessing = (files) => {
         output: {
             fidelity: { },
             morganStanley: { },
+            morganStanleyNew: { },
             degiro: { },
             excel: { }
         },
@@ -63,6 +67,20 @@ const enqueueReportsProcessing = (files) => {
                 throw e;
             });
 
+    const processMorganStanleyNewReports = fileBuffers =>
+        Promise.resolve()
+            .then(() => report.status.morganStanleyNew = 'parsing')
+            .then(() => parseMorganNewFromMemory(fileBuffers))
+            .then(json => {
+                report.status.morganStanleyNew = 'done'
+                report.output.morganStanleyNew = json;
+            })
+            .catch(e => {
+                console.log('Morgan Stanley New parser error:', e);
+                report.status.morganStanleyNew = 'failed';
+                report.output.morganStanleyNew = [];
+            });
+
     const processDegiroReports = fileBuffers =>
         Promise.resolve()
             .then(() => report.status.degiro = 'parsing')
@@ -86,8 +104,17 @@ const enqueueReportsProcessing = (files) => {
             })
             .then(() => {
                 const morganStanleyInput = translateMorganStanleyReports(report.output.morganStanley);
+                const morganStanleyNewInput = translateMorganStanleyNewReports(report.output.morganStanleyNew);
                 const degiroInput = translateDegiroReports(report.output.degiro);
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
+
+                // Sort entries by date (MM-DD-YYYY) ascending
+                const sortByDate = (a, b) => {
+                    const [am, ad, ay] = a.date.split('-').map(Number);
+                    const [bm, bd, by] = b.date.split('-').map(Number);
+                    return (ay - by) || (am - bm) || (ad - bd);
+                };
+
                 const excelGeneratorInput = {
                     inputs: {
                         exchangeRate: 21.84,
@@ -97,14 +124,16 @@ const enqueueReportsProcessing = (files) => {
                     },
                     stocks: [
                         ...morganStanleyInput.stocks,
+                        ...morganStanleyNewInput.stocks,
                         ...fidelityInput.stocks
-                    ],
+                    ].sort(sortByDate),
                     dividends: [
                         ...morganStanleyInput.dividends,
+                        ...morganStanleyNewInput.dividends,
                         ...fidelityInput.dividends,
                         ...degiroInput.dividends
-                    ],
-                    esppStocks: fidelityInput.esppStocks
+                    ].sort(sortByDate),
+                    esppStocks: fidelityInput.esppStocks.sort(sortByDate)
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
@@ -125,6 +154,7 @@ const enqueueReportsProcessing = (files) => {
     Promise.all([
         processFidelityReports(fileBuffers),
         processMorganStanleyReports(fileBuffers),
+        processMorganStanleyNewReports(fileBuffers),
         processDegiroReports(fileBuffers)
     ])
     .then(() => generateExcel())
@@ -186,6 +216,7 @@ app.get('/status/:token/json', (req, res) => {
             output: {
                 fidelity: report.output.fidelity,
                 morganStanley: report.output.morganStanley,
+                morganStanleyNew: report.output.morganStanleyNew,
                 degiro: report.output.degiro,
                 excelRaw: report.output.excelRaw
             }

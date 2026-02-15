@@ -64,6 +64,13 @@ const WORKSHEET_OPTIONS = {
     }
 };
 
+// Sort by date in MM-DD-YYYY format chronologically (year, month, day)
+const compareDates = (a, b) => {
+    const [am, ad, ay] = a.date.split('-').map(Number);
+    const [bm, bd, by] = b.date.split('-').map(Number);
+    return (ay - by) || (am - bm) || (ad - bd);
+};
+
 const YELLOW_CZK = { ... YELLOW, ... CZK };
 const YELLOW_TITLE = { ... YELLOW, ... TITLE };
 const BLUE_CZK = { ... BLUE, ... CZK };
@@ -203,7 +210,7 @@ const populateWorksheet = (ws, input, locale) => {
     };
 
     rowCursor += SKIP_HEADER;
-    input.stocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
+    input.stocks.sort(compareDates).forEach((s, i) => {
         ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
         const style = s.source === 'Degiro' ? EUR : USD;
         ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
@@ -236,7 +243,7 @@ const populateWorksheet = (ws, input, locale) => {
     ws.cell(rowCursor + 1, 6).string(locale.taxCZK).style(HEADER);
 
     rowCursor += SKIP_HEADER;
-    input.dividends.sort((a, b) => a.date.localeCompare(b.date)).forEach((d, i) => {
+    input.dividends.sort(compareDates).forEach((d, i) => {
         ws.cell(rowCursor + i, 1).string(d.date).style(d.date.indexOf(targetYear) < 0 ? WARNING : {});
         ws.cell(rowCursor + i, 2).string(d.source);
         const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForSource(d.source));
@@ -275,7 +282,7 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
 
         rowCursor += SKIP_HEADER;
-        input.esppStocks.sort((a, b) => a.date.localeCompare(b.date)).forEach((s, i) => {
+        input.esppStocks.sort(compareDates).forEach((s, i) => {
             ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
             const style = s.source === 'Degiro' ? EUR : USD;
             ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
