@@ -207,7 +207,7 @@ app.get('/status/:token/json', (req, res) => {
             }
         })
     } else {
-        res.status(404);
+        res.status(404).json({ error: 'Report not found' });
     }
 });
 
@@ -286,14 +286,14 @@ app.get('/status/:token/xlsx', (req, res) => {
     if (report) {
         report.output.excel.write('report.xlsx', res);
     } else {
-        res.status(404);
+        res.status(404).json({ error: 'Report not found' });
     }
 });
 
 app.get('/status/:token', (req, res) => {
     if (!getReport(req.params.token)) {
         res.status(404);
-        res.sendFile(path.join(__dirname, './public/report-404.html'))
+        return res.sendFile(path.join(__dirname, './public/report-404.html'));
     }
     res.sendFile(path.join(__dirname, './public/report-status.html'))
 });
