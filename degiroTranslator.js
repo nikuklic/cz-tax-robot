@@ -1,15 +1,15 @@
 const { DegiroTransaction } = require('./degiroParser');
+const config = require('./config.json');
 
 function translateDegiroReports(degiroReports) {
     let dividendTransactions = [];
-    let taxTransactions = [];
     degiroReports.forEach(stockDocument => {
-        dividendTransactions = [...stockDocument.report];
+        dividendTransactions = dividendTransactions.concat(stockDocument.report);
     });
 
     const normalizedDividends = dividendTransactions.map(transaction => {
         return {
-            'date': '12-31-2024',
+            'date': `12-31-${config.targetYear}`,
             'amount': transaction[DegiroTransaction.grossDividend],
             'tax': transaction[DegiroTransaction.withholdingTax],
             'source': 'Degiro',

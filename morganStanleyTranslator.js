@@ -36,9 +36,9 @@ function translateMorganStanleyReports(morganStanleyReports) {
 }
 
 function getTaxWithheld(taxTransactions, date) {
-    taxTransaction = taxTransactions.find(transaction => transaction[MorganTransaction.date] === date);
+    const taxTransaction = taxTransactions.find(transaction => transaction[MorganTransaction.date] === date);
     if (taxTransaction) {
-        return taxTransaction[MorganTransaction.netAmount]
+        return Math.abs(taxTransaction[MorganTransaction.netAmount]);
     }
     return 0;
 }

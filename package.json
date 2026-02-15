@@ -15,12 +15,14 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "jest": "^30.2.0",
     "nodemon": "latest"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "morgan": "node morganTest.js",
-    "test-excel": "node excelTest.js"
+    "test-excel": "node excelTest.js",
+    "test": "jest"
   }
 }

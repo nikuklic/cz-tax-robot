@@ -1,4 +1,5 @@
 const xl = require("excel4node");
+const config = require('./config.json');
 
 const SKIP_ROW = 2;
 const SKIP_HEADER = 2;
@@ -132,7 +133,7 @@ const CZ = {
     source: 'Zdroj',
 };
 
-const targetYear = '2025';
+const targetYear = config.targetYear;
 
 /**
  * @param {*} input

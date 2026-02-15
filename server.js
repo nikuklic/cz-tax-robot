@@ -2,6 +2,7 @@ const path = require('path');
 const express = require('express')
 const upload = require('multer')();
 const uuidv4 = require('uuid/v4')
+const config = require('./config.json');
 const app = express()
 const port = process.env.port || process.env.PORT || 3000;
 
@@ -117,10 +118,10 @@ const enqueueReportsProcessing = (files) => {
 
                 const excelGeneratorInput = {
                     inputs: {
-                        exchangeRate: 21.84,
-                        exchangeRateEur: 24.66,
+                        exchangeRate: config.exchangeRateUsdCzk,
+                        exchangeRateEur: config.exchangeRateEurCzk,
                         getExchangeRateForDay,
-                        esppDiscount: 10,
+                        esppDiscount: config.esppDiscount,
                     },
                     stocks: [
                         ...morganStanleyInput.stocks,
@@ -174,23 +175,11 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const targetYear = '2025';
+const { isYearWrong, getESPPCount } = require('./serverHelpers');
 
-function getESPPCount(excelRaw) {
-    return excelRaw.esppStocks.reduce((acc, esppEntry) => {
-		return acc + (esppEntry.date.includes(targetYear) ? 1 : 0);
-	}, 0);
-}
-
-function isYearWrong(excelRaw) {
-    let res = false;
-    [excelRaw.stocks, excelRaw.dividends, excelRaw.esppStocks].forEach(entries => {
-        if (entries.some(entry => !entry.date.includes(targetYear))) {
-            res = true;
-        }
-    });
-    return res;
-}
+app.get('/api/config', (req, res) => {
+    res.json({ targetYear: config.targetYear });
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {

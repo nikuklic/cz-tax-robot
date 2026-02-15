@@ -135,6 +135,12 @@ UI.setupStatusPage = () => {
   const yearWarning = document.getElementById("year-warning");
   const esppWarning = document.getElementById("espp-warning");
 
+  let appTargetYear = '';
+  fetch('/api/config')
+    .then(r => r.json())
+    .then(c => { appTargetYear = c.targetYear; })
+    .catch(() => { appTargetYear = ''; });
+
   const state = {
     done: false,
     detailsAreVisible: false
@@ -183,7 +189,7 @@ UI.setupStatusPage = () => {
 
 		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {
 			esppWarning.style.display = 'block';
-			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for 2025 is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
+			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for ' + appTargetYear + ' is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
 		  }
 
           state.done = true;

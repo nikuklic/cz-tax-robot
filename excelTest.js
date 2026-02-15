@@ -1,9 +1,10 @@
 const { generate } = require("./excelGenerator");
+const config = require('./config.json');
 
 const input = {
     "inputs": {
-        "exchangeRate": 21.78,
-        "esppDiscount": 10
+        "exchangeRate": config.exchangeRateUsdCzk,
+        "esppDiscount": config.esppDiscount
     },
     "stocks": [{
         "date": "2018-03-31",
