@@ -20,6 +20,9 @@ function getFoundYears(excelRaw) {
             }
         });
     });
+    if (excelRaw.coi && excelRaw.coi.year) {
+        years.add(excelRaw.coi.year);
+    }
     return Array.from(years).sort();
 }
 
@@ -35,6 +38,7 @@ function filterByYears(excelRaw, selectedYears) {
         stocks: filterEntries(excelRaw.stocks),
         dividends: filterEntries(excelRaw.dividends),
         esppStocks: filterEntries(excelRaw.esppStocks),
+        coi: excelRaw.coi && selectedYears.includes(excelRaw.coi.year) ? excelRaw.coi : null,
     };
 }
 

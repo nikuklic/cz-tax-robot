@@ -64,6 +64,33 @@ const WORKSHEET_OPTIONS = {
     }
 };
 
+const INSTRUCTIONS_WORKSHEET_OPTIONS = {
+    sheetFormat: {
+        baseColWidth: 25
+    }
+};
+
+const GREEN = {
+    fill: {
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#C6EFCE',
+        fgColor: '#C6EFCE'
+    }
+};
+
+const LIGHT_GRAY = {
+    fill: {
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#F2F2F2',
+        fgColor: '#F2F2F2'
+    }
+};
+
+const GREEN_CZK = { ...GREEN, ...CZK };
+const GREEN_TITLE = { ...GREEN, ...TITLE };
+
 // Sort by date in MM-DD-YYYY format chronologically (year, month, day)
 const compareDates = (a, b) => {
     const [am, ad, ay] = a.date.split('-').map(Number);
@@ -102,6 +129,62 @@ const EN = {
     overallDividendsCZK: 'Overall dividends acquired (CZK)',
     overallTaxCZK: 'Dividend tax withheld (CZK)',
     source: 'Source',
+    coiSection: 'Confirmation of Income (COI)',
+    coiEmployer: 'Employer',
+    coiYear: 'Tax Year',
+    coiGrossIncome: 'Gross Employment Income (ř.1)',
+    coiIncomePaid: 'Income Paid by Jan 31 (ř.2)',
+    coiMonths: 'Months Worked (ř.3)',
+    coiBackpay: 'Backpay from Previous Periods (ř.4)',
+    coiTaxBase: 'Tax Base (ř.5)',
+    coiTaxAdvance: 'Tax Advances Withheld (ř.8)',
+    coiTaxAdvanceFromIncome: 'Tax Advance from Income (ř.6)',
+    coiTaxAdvanceFromBackpay: 'Tax Advance from Backpay (ř.7)',
+    coiTaxBonuses: 'Monthly Tax Bonuses (ř.9)',
+    coiEmployerContributions: 'Employer Contributions (ř.10)',
+    taxInstructionsSheet: 'Tax Instructions',
+    taxInstructionsTitle: 'Tax Return Filing Instructions',
+    taxInstructionsSubtitle: 'How to use computed values in the Czech Personal Income Tax Return (DAP)',
+    taxFormSection: 'Tax Form Section',
+    taxFormRow: 'Row / Field',
+    taxDescription: 'Description',
+    taxValue: 'Your Value (CZK)',
+    taxNotes: 'Notes',
+    taxSectionEmployment: 'Part 2 – Employment Income (§6)',
+    taxSectionDividends: 'Dividend Income',
+    taxSectionAttachments: 'Attachments',
+    taxSectionSummary: 'Summary',
+    taxRow31: 'Row 31',
+    taxRow31Desc: 'Gross employment income from COI + Stock Award / ESPP income',
+    taxRow31Note: 'COI row 1 + Stock/ESPP income. If COI was uploaded, this is auto-computed.',
+    taxRow35: 'Row 35',
+    taxRow35Desc: 'Employment income from abroad (not subject to CZ tax withholdings)',
+    taxRow35Note: 'Stock Award / ESPP income is foreign employment income. Enter the same value here.',
+    taxRow36: 'Row 36',
+    taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
+    taxDivOption: 'Choose ONE of the two options below for dividend income:',
+    taxDivOptionA: 'Option A: Attachment 3 (Foreign Tax Credit)',
+    taxDivOptionB: 'Option B: Attachment 4 (Separate Tax Base) – RECOMMENDED',
+    taxRow321: 'Row 321',
+    taxRow321Desc: 'Dividend income (CZK) – only if using Attachment 3',
+    taxRow323: 'Row 323',
+    taxRow323Desc: 'Tax withheld (CZK) – only if using Attachment 3',
+    taxRow38: 'Row 38',
+    taxRow38Desc: 'Sum of capital income (dividends) – only if using Attachment 3',
+    taxRow401: 'Row 401 / 406 / 411',
+    taxRow401Desc: 'Dividend income (CZK) – if using Attachment 4 (Separate Tax Base)',
+    taxRow412: 'Row 412',
+    taxRow412Desc: 'Tax withheld (CZK) – if using Attachment 4 (Separate Tax Base)',
+    taxAtt3Title: 'Attachment 3 – Avoiding Double Taxation',
+    taxAtt3Col1: 'Column 1: Foreign entity (e.g. Microsoft US)',
+    taxAtt3Col2: 'Column 2: Source country (US)',
+    taxAtt3Col3: 'Column 3: Tax paid abroad (foreign currency)',
+    taxAtt3Col4: 'Column 4: Tax paid abroad (CZK)',
+    taxAtt3Col5: 'Column 5: Income taxed abroad (CZK)',
+    taxAtt4Title: 'Attachment 4 – Separate Tax Base for Dividends',
+    taxExchangeRateNote: 'Exchange rate source: Pokyn GFŘ-D-63 (annual fixed rate from Czech Financial Authority)',
+    taxExchangeRateUrl: 'https://www.financnisprava.cz/assets/cs/prilohy/d-sprava-dani-a-poplatku/Pokyn_GFR-D-63.pdf',
+    taxFormUrl: 'https://www.daneelektronicky.cz/',
 };
 
 const CZ = {
@@ -130,6 +213,19 @@ const CZ = {
     overallDividendsCZK: 'Dividendy z držení akcií celkem (CZK)',
     overallTaxCZK: 'Srážková daň z dividendů (CZK)',
     source: 'Zdroj',
+    coiSection: 'Potvrzení o zdanitelných příjmech (COI)',
+    coiEmployer: 'Zaměstnavatel',
+    coiYear: 'Zdaňovací období',
+    coiGrossIncome: 'Úhrn příjmů (ř.1)',
+    coiIncomePaid: 'Příjmy vyplacené do 31.1. (ř.2)',
+    coiMonths: 'Měsíce (ř.3)',
+    coiBackpay: 'Doplatky za minulá období (ř.4)',
+    coiTaxBase: 'Základ daně (ř.5)',
+    coiTaxAdvance: 'Zálohy na daň celkem (ř.8)',
+    coiTaxAdvanceFromIncome: 'Záloha z příjmů (ř.6)',
+    coiTaxAdvanceFromBackpay: 'Záloha z doplatků (ř.7)',
+    coiTaxBonuses: 'Daňové bonusy (ř.9)',
+    coiEmployerContributions: 'Příspěvky zaměstnavatele (ř.10)',
 };
 
 /**
@@ -154,6 +250,9 @@ const generate = (input) => {
     // const cz_custom_ws = wb.addWorksheet(CZ.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
     // input.inputs.exchangeRateKind = 'variable';
     // populateWorksheet(cz_custom_ws, input, CZ);
+
+    const instructions_ws = wb.addWorksheet(EN.taxInstructionsSheet, INSTRUCTIONS_WORKSHEET_OPTIONS);
+    populateTaxInstructionsSheet(instructions_ws, input, EN);
 
     return wb;
 }
@@ -375,7 +474,406 @@ const populateWorksheet = (ws, input, locale) => {
     ws.cell(rowCursor + 1, 2).formula(`${dividendsPriceCzk}`).style(BLUE_CZK);
     ws.cell(rowCursor + 2, 1).string(locale.overallTaxCZK).style(BLUE_TITLE);
     ws.cell(rowCursor + 2, 2).formula(`${dividendsTaxCzk}`).style(BLUE_CZK);
+
+    // COI Section (if COI data is available)
+    if (input.coi) {
+        rowCursor += 3 + SKIP_ROW;
+        ws.cell(rowCursor, 1).string(locale.coiSection).style(BLUE_TITLE);
+        ws.cell(rowCursor, 2).style(BLUE);
+        ws.cell(rowCursor, 3).style(BLUE);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiEmployer);
+        ws.cell(rowCursor, 2).string(input.coi.employer || '');
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiYear);
+        ws.cell(rowCursor, 2).string(input.coi.year || '');
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiMonths);
+        ws.cell(rowCursor, 2).string(input.coi.months || '');
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiGrossIncome).style(TITLE);
+        ws.cell(rowCursor, 2).number(input.coi.grossIncome).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiIncomePaid);
+        ws.cell(rowCursor, 2).number(input.coi.incomePaid).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiBackpay);
+        ws.cell(rowCursor, 2).number(input.coi.backpay).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiTaxBase);
+        ws.cell(rowCursor, 2).number(input.coi.taxBase).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiTaxAdvanceFromIncome);
+        ws.cell(rowCursor, 2).number(input.coi.taxAdvanceFromIncome).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiTaxAdvanceFromBackpay);
+        ws.cell(rowCursor, 2).number(input.coi.taxAdvanceFromBackpay).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiTaxAdvance).style(YELLOW_TITLE);
+        ws.cell(rowCursor, 2).number(input.coi.totalTaxAdvance).style(YELLOW_CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiTaxBonuses);
+        ws.cell(rowCursor, 2).number(input.coi.taxBonuses).style(CZK);
+        rowCursor += 1;
+
+        ws.cell(rowCursor, 1).string(locale.coiEmployerContributions);
+        ws.cell(rowCursor, 2).number(input.coi.employerContributions).style(CZK);
+    }
 }
+
+const populateTaxInstructionsSheet = (ws, input, locale) => {
+    let row = 1;
+
+    // Column widths
+    ws.column(1).setWidth(22);
+    ws.column(2).setWidth(28);
+    ws.column(3).setWidth(55);
+    ws.column(4).setWidth(22);
+    ws.column(5).setWidth(65);
+
+    // Title
+    ws.cell(row, 1).string(locale.taxInstructionsTitle).style({ font: { bold: true, size: 14 } });
+    row += 1;
+    ws.cell(row, 1).string(locale.taxInstructionsSubtitle).style({ font: { italic: true, size: 11 } });
+    row += 2;
+
+    // Exchange rate note
+    ws.cell(row, 1).string(locale.taxExchangeRateNote).style({ font: { italic: true } });
+    row += 1;
+    ws.cell(row, 1).string(locale.taxExchangeRateUrl).style({ font: { color: '#0563C1', underline: true } });
+    row += 1;
+    ws.cell(row, 1).string(`Tax form: ${locale.taxFormUrl}`).style({ font: { color: '#0563C1', underline: true } });
+    row += 2;
+
+    // Compute summary values using the same logic as the data sheets
+    const exchangeRatesForYears = input.inputs.exchangeRatesForYears || {};
+    const years = Object.keys(exchangeRatesForYears).sort();
+
+    const getYearFromDate = dateString => {
+        const parts = dateString.split('-');
+        return parts[2];
+    };
+
+    const getExchangeRate = (source, dateString) => {
+        const year = getYearFromDate(dateString);
+        const rates = exchangeRatesForYears[year] || exchangeRatesForYears[years[0]] || { usdCzk: 0, eurCzk: 0 };
+        if (source === 'Degiro') return rates.eurCzk || 0;
+        return rates.usdCzk || 0;
+    };
+
+    let totalStocksCzk = 0;
+    input.stocks.forEach(s => {
+        totalStocksCzk += s.price * getExchangeRate(s.source, s.date);
+    });
+
+    let totalDividendsCzk = 0;
+    let totalDividendTaxCzk = 0;
+    input.dividends.forEach(d => {
+        const rate = getExchangeRate(d.source, d.date);
+        totalDividendsCzk += d.amount * rate;
+        totalDividendTaxCzk += d.tax * rate;
+    });
+
+    let totalEsppDiscountCzk = 0;
+    if (input.esppStocks && input.esppStocks.length) {
+        let totalEsppCzk = 0;
+        input.esppStocks.forEach(s => {
+            totalEsppCzk += s.price * getExchangeRate(s.source, s.date);
+        });
+        const discountPct = input.inputs.esppDiscount / 100;
+        totalEsppDiscountCzk = totalEsppCzk / (1 - discountPct) * discountPct;
+    }
+
+    const overallStocksCzk = totalStocksCzk + totalEsppDiscountCzk;
+
+    // COI (Confirmation of Income) values
+    const coiGrossIncome = input.coi ? input.coi.grossIncome : 0;
+    const coiTotalTaxAdvance = input.coi ? input.coi.totalTaxAdvance : 0;
+    const coiTaxBonuses = input.coi ? input.coi.taxBonuses : 0;
+    const hasCoi = !!input.coi;
+
+    // Row 31 = COI gross income + stock/ESPP income
+    const row31Value = coiGrossIncome + overallStocksCzk;
+
+    // Table headers
+    const headerStyle = { ...HEADER, ...TITLE, ...LIGHT_GRAY };
+    ws.cell(row, 1).string(locale.taxFormSection).style(headerStyle);
+    ws.cell(row, 2).string(locale.taxFormRow).style(headerStyle);
+    ws.cell(row, 3).string(locale.taxDescription).style(headerStyle);
+    ws.cell(row, 4).string(locale.taxValue).style(headerStyle);
+    ws.cell(row, 5).string(locale.taxNotes).style(headerStyle);
+    row += 1;
+
+    // === SECTION: COI Summary (if uploaded) ===
+    if (hasCoi) {
+        ws.cell(row, 1).string(locale.coiSection).style(BLUE_TITLE);
+        ws.cell(row, 2).style(BLUE);
+        ws.cell(row, 3).style(BLUE);
+        ws.cell(row, 4).style(BLUE);
+        ws.cell(row, 5).style(BLUE);
+        row += 1;
+
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string(locale.coiEmployer);
+        ws.cell(row, 3).string(input.coi.employer || '');
+        ws.cell(row, 4).string('');
+        ws.cell(row, 5).string(`Year: ${input.coi.year || 'N/A'}, Months: ${input.coi.months || 'N/A'}`);
+        row += 1;
+
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string(locale.coiGrossIncome).style(TITLE);
+        ws.cell(row, 3).string('COI ř.1 – Total gross employment income');
+        ws.cell(row, 4).number(Math.round(coiGrossIncome * 100) / 100).style(CZK);
+        ws.cell(row, 5).string('');
+        row += 1;
+
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string(locale.coiTaxBase).style(TITLE);
+        ws.cell(row, 3).string('COI ř.5 – Employment tax base');
+        ws.cell(row, 4).number(Math.round(input.coi.taxBase * 100) / 100).style(CZK);
+        ws.cell(row, 5).string('');
+        row += 1;
+
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string(locale.coiTaxAdvance).style(TITLE);
+        ws.cell(row, 3).string('COI ř.8 – Total tax advances withheld by employer');
+        ws.cell(row, 4).number(Math.round(coiTotalTaxAdvance * 100) / 100).style(GREEN_CZK);
+        ws.cell(row, 5).string('This credit reduces your final tax liability');
+        row += 1;
+
+        if (coiTaxBonuses > 0) {
+            ws.cell(row, 1).string('');
+            ws.cell(row, 2).string(locale.coiTaxBonuses).style(TITLE);
+            ws.cell(row, 3).string('COI ř.9 – Monthly tax bonuses paid');
+            ws.cell(row, 4).number(Math.round(coiTaxBonuses * 100) / 100).style(CZK);
+            ws.cell(row, 5).string('');
+            row += 1;
+        }
+
+        if (input.coi.employerContributions > 0) {
+            ws.cell(row, 1).string('');
+            ws.cell(row, 2).string(locale.coiEmployerContributions).style(TITLE);
+            ws.cell(row, 3).string('COI ř.10 – Employer pension/insurance contributions');
+            ws.cell(row, 4).number(Math.round(input.coi.employerContributions * 100) / 100).style(CZK);
+            ws.cell(row, 5).string('');
+            row += 1;
+        }
+
+        row += 1;
+    }
+
+    // === SECTION: Employment Income ===
+    ws.cell(row, 1).string(locale.taxSectionEmployment).style(BLUE_TITLE);
+    ws.cell(row, 2).style(BLUE);
+    ws.cell(row, 3).style(BLUE);
+    ws.cell(row, 4).style(BLUE);
+    ws.cell(row, 5).style(BLUE);
+    row += 1;
+
+    // Row 31
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow31).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow31Desc);
+    ws.cell(row, 4).number(Math.round(row31Value * 100) / 100).style(GREEN_CZK);
+    ws.cell(row, 5).string(hasCoi
+        ? `Auto-computed: COI ř.1 (${Math.round(coiGrossIncome).toLocaleString()} Kč) + Stock/ESPP income (${Math.round(overallStocksCzk).toLocaleString()} Kč)`
+        : locale.taxRow31Note);
+    row += 1;
+
+    // Row 35
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow35).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow35Desc);
+    ws.cell(row, 4).number(Math.round(overallStocksCzk * 100) / 100).style(GREEN_CZK);
+    ws.cell(row, 5).string(locale.taxRow35Note);
+    row += 1;
+
+    // Row 36
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow36).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow36Desc);
+    ws.cell(row, 4).string('');
+    ws.cell(row, 5).string('');
+    row += 2;
+
+    // === SECTION: Dividend Income ===
+    ws.cell(row, 1).string(locale.taxSectionDividends).style(BLUE_TITLE);
+    ws.cell(row, 2).style(BLUE);
+    ws.cell(row, 3).style(BLUE);
+    ws.cell(row, 4).style(BLUE);
+    ws.cell(row, 5).style(BLUE);
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string('');
+    ws.cell(row, 3).string(locale.taxDivOption).style({ font: { bold: true, italic: true } });
+    ws.cell(row, 4).string('');
+    ws.cell(row, 5).string('');
+    row += 2;
+
+    // Option A: Attachment 3
+    ws.cell(row, 1).string(locale.taxDivOptionA).style(YELLOW_TITLE);
+    ws.cell(row, 2).style(YELLOW);
+    ws.cell(row, 3).style(YELLOW);
+    ws.cell(row, 4).style(YELLOW);
+    ws.cell(row, 5).style(YELLOW);
+    row += 1;
+
+    // Row 38 (Attachment 3)
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow38).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow38Desc);
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(CZK);
+    ws.cell(row, 5).string('');
+    row += 1;
+
+    // Row 321 (Attachment 3)
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow321).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow321Desc);
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(CZK);
+    ws.cell(row, 5).string('');
+    row += 1;
+
+    // Row 323 (Attachment 3)
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow323).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow323Desc);
+    ws.cell(row, 4).number(Math.round(totalDividendTaxCzk * 100) / 100).style(CZK);
+    ws.cell(row, 5).string('');
+    row += 2;
+
+    // Option B: Attachment 4 (Recommended)
+    ws.cell(row, 1).string(locale.taxDivOptionB).style(GREEN_TITLE);
+    ws.cell(row, 2).style(GREEN);
+    ws.cell(row, 3).style(GREEN);
+    ws.cell(row, 4).style(GREEN);
+    ws.cell(row, 5).style(GREEN);
+    row += 1;
+
+    // Row 401/406/411
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow401).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow401Desc);
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(GREEN_CZK);
+    ws.cell(row, 5).string('');
+    row += 1;
+
+    // Row 412
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow412).style(TITLE);
+    ws.cell(row, 3).string(locale.taxRow412Desc);
+    ws.cell(row, 4).number(Math.round(totalDividendTaxCzk * 100) / 100).style(GREEN_CZK);
+    ws.cell(row, 5).string('');
+    row += 2;
+
+    // === SECTION: Attachment 3 detail ===
+    ws.cell(row, 1).string(locale.taxSectionAttachments).style(BLUE_TITLE);
+    ws.cell(row, 2).style(BLUE);
+    ws.cell(row, 3).style(BLUE);
+    ws.cell(row, 4).style(BLUE);
+    ws.cell(row, 5).style(BLUE);
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxAtt3Title).style(TITLE);
+    ws.cell(row, 3).string('');
+    ws.cell(row, 4).string('');
+    ws.cell(row, 5).string('');
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string('');
+    ws.cell(row, 3).string(locale.taxAtt3Col1);
+    row += 1;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string('');
+    ws.cell(row, 3).string(locale.taxAtt3Col2);
+    row += 1;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string('');
+    ws.cell(row, 3).string(locale.taxAtt3Col3);
+    row += 1;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxAtt3Col4);
+    ws.cell(row, 3).string('');
+    ws.cell(row, 4).number(Math.round(totalDividendTaxCzk * 100) / 100).style(CZK);
+    row += 1;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxAtt3Col5);
+    ws.cell(row, 3).string('');
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(CZK);
+    row += 2;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxAtt4Title).style(TITLE);
+    ws.cell(row, 3).string('');
+    ws.cell(row, 4).string('');
+    ws.cell(row, 5).string('');
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow401);
+    ws.cell(row, 3).string('Dividend income (CZK)');
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(GREEN_CZK);
+    row += 1;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow412);
+    ws.cell(row, 3).string('Tax withheld (CZK)');
+    ws.cell(row, 4).number(Math.round(totalDividendTaxCzk * 100) / 100).style(GREEN_CZK);
+    row += 2;
+
+    // === SECTION: Summary ===
+    ws.cell(row, 1).string(locale.taxSectionSummary).style(BLUE_TITLE);
+    ws.cell(row, 2).style(BLUE);
+    ws.cell(row, 3).style(BLUE);
+    ws.cell(row, 4).style(BLUE);
+    ws.cell(row, 5).style(BLUE);
+    row += 1;
+
+    if (hasCoi) {
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string('Row 31 (COI + Stocks)').style(TITLE);
+        ws.cell(row, 3).string('COI gross income + Stock/ESPP income = Total for Row 31');
+        ws.cell(row, 4).number(Math.round(row31Value * 100) / 100).style(GREEN_CZK);
+        row += 1;
+
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string('COI Tax Advances (ř.8)').style(TITLE);
+        ws.cell(row, 3).string('Tax already withheld by employer – credit against your tax liability');
+        ws.cell(row, 4).number(Math.round(coiTotalTaxAdvance * 100) / 100).style(GREEN_CZK);
+        row += 1;
+    }
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.overallStocksCZK).style(TITLE);
+    ws.cell(row, 3).string(hasCoi ? 'Stock/ESPP income (included in Row 31 above)' : 'Add to Row 31 and enter in Row 35');
+    ws.cell(row, 4).number(Math.round(overallStocksCzk * 100) / 100).style(GREEN_CZK);
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.overallDividendsCZK).style(TITLE);
+    ws.cell(row, 3).string('Use in Attachment 3 (Row 321) or Attachment 4 (Row 401/406/411)');
+    ws.cell(row, 4).number(Math.round(totalDividendsCzk * 100) / 100).style(GREEN_CZK);
+    row += 1;
+
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.overallTaxCZK).style(TITLE);
+    ws.cell(row, 3).string('Use in Attachment 3 (Row 323) or Attachment 4 (Row 412)');
+    ws.cell(row, 4).number(Math.round(totalDividendTaxCzk * 100) / 100).style(GREEN_CZK);
+    row += 1;
+};
 
 module.exports = {
     generate

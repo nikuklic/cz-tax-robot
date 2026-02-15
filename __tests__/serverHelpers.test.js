@@ -53,6 +53,38 @@ describe('serverHelpers', () => {
             expect(getFoundYears(excelRaw)).toEqual([]);
         });
 
+        it('should include year from COI data', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                coi: { year: '2025' },
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
+        it('should include COI year alongside other years', () => {
+            const excelRaw = {
+                stocks: [{ date: '03-15-2024' }],
+                dividends: [],
+                esppStocks: [],
+                coi: { year: '2025' },
+            };
+            const years = getFoundYears(excelRaw);
+            expect(years).toContain('2024');
+            expect(years).toContain('2025');
+        });
+
+        it('should not duplicate COI year if already present', () => {
+            const excelRaw = {
+                stocks: [{ date: '03-15-2025' }],
+                dividends: [],
+                esppStocks: [],
+                coi: { year: '2025' },
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
         it('should return sorted unique years across all entry types', () => {
             const excelRaw = {
                 stocks: [
@@ -203,6 +235,43 @@ describe('serverHelpers', () => {
             };
             const result = filterByYears(excelRaw, []);
             expect(result.stocks).toHaveLength(0);
+        });
+
+        it('should include COI when its year matches selected years', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                coi: { year: '2025', grossIncome: 3408813 },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.coi).not.toBeNull();
+            expect(result.coi.grossIncome).toBe(3408813);
+        });
+
+        it('should exclude COI when its year does not match selected years', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                coi: { year: '2024', grossIncome: 3408813 },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.coi).toBeNull();
+        });
+
+        it('should handle null COI in filterByYears', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                coi: null,
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.coi).toBeNull();
         });
     });
 });

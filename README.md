@@ -1,6 +1,6 @@
 # Tax Robot
 
-Generates Czech tax reports (Excel) from Fidelity, Morgan Stanley, and Degiro brokerage PDF statements.
+Generates Czech tax reports (Excel) from Fidelity, Morgan Stanley, and Degiro brokerage PDF statements, and optionally integrates your Confirmation of Income (COI / Potvrzení o zdanitelných příjmech) for auto-computed tax form values.
 
 ## Usage
 
@@ -22,16 +22,27 @@ The web UI will be available at `http://127.0.0.1:3000`.
 
 ## Supported Brokers & Formats
 
-| Broker | Parser | Formats |
-|--------|--------|---------|
+| Broker / Document | Parser | Formats |
+|--------|--------|--------|
 | Fidelity | `fidelityReportsParser.js` | Monthly statements (pre-2025 and 2025+ formats) |
 | Morgan Stanley (legacy) | `morganStanleyParser.js` | Older quarterly statements |
 | Morgan Stanley (new) | `morganStanleyNewParser.js` | New quarterly statement format |
 | Degiro | `degiroParser.js` | Degiro transaction reports |
+| COI (Potvrzení) | `coiParser.js` | Czech MFin 5460 "Potvrzení o zdanitelných příjmech" |
 
 ## Multi-Year Support
 
 Upload reports spanning multiple tax years. After parsing, you'll be prompted to select which year(s) to include in the generated Excel report. Per-year exchange rates are resolved from `config.json`.
+
+## COI (Confirmation of Income) Support
+
+Upload your Czech "Potvrzení o zdanitelných příjmech ze závislé činnosti" (MFin 5460) PDF alongside your brokerage statements. The COI parser extracts all standard form fields (gross income, tax advances, tax base, etc.) and integrates them into the Excel report:
+
+- **Data sheets**: A dedicated COI section displays all extracted employment income details
+- **Tax Instructions**: Row 31 is auto-computed as `COI gross income + Stock/ESPP income` instead of requiring manual addition
+- **Summary**: COI tax advances are shown as a credit against your total tax liability
+
+The COI is optional — without it, the report generates identically to before.
 
 ## Configuration
 
@@ -71,6 +82,8 @@ morganStanleyNewParser.js    — Morgan Stanley new PDF parser (pdf-parse)
 morganStanleyNewTranslator.js — Morgan Stanley new → common format translator
 degiroParser.js              — Degiro transaction report parser
 degiroTranslator.js          — Degiro → common format translator
+coiParser.js                 — COI (Potvrzení) PDF parser
+coiTranslator.js             — COI → common format translator
 excelGenerator.js            — Generates the final Excel tax report
 utils/                       — Exchange rate lookup, PDF utilities, promise helpers
 __tests__/                   — Jest test suites
@@ -87,6 +100,7 @@ See the `docs/` folder for detailed change logs:
 - [Morgan Stanley New Parser](docs/morgan-stanley-new-parser.md) — New Morgan Stanley quarterly statement parser
 - [Config Extraction & Tests](docs/config-extraction-and-tests.md) — Config file, server helpers, and Jest test framework
 - [Multi-Year Support](docs/multi-year-support.md) — Year selection workflow and per-year exchange rates
+- [COI Parser](docs/coi-parser.md) — Confirmation of Income (Potvrzení) PDF parsing and Excel integration
 
 # Known issues/limitations
 

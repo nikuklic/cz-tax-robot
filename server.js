@@ -17,6 +17,8 @@ const { parseFromMemory: parseMorganNewFromMemory } = require('./morganStanleyNe
 const { translateMorganStanleyNewReports } = require('./morganStanleyNewTranslator');
 const { parseFromMemory: parseDegiroFromMemory  } = require('./degiroParser');
 const { translateDegiroReports  } = require('./degiroTranslator');
+const { parseFromMemory: parseCoiFromMemory } = require('./coiParser');
+const { translateCoiReport } = require('./coiTranslator');
 
 const processing_queue = {};
 const getReport = token => processing_queue[token];
@@ -32,6 +34,7 @@ const enqueueReportsProcessing = (files) => {
             morganStanley: 'none',
             morganStanleyNew: 'none',
             degiro: 'none',
+            coi: 'none',
             excel: 'waiting',
             aggregate: 'in-progress'
         },
@@ -40,6 +43,7 @@ const enqueueReportsProcessing = (files) => {
             morganStanley: { },
             morganStanleyNew: { },
             degiro: { },
+            coi: null,
             excel: { }
         },
         files: fileInfos
@@ -99,6 +103,20 @@ const enqueueReportsProcessing = (files) => {
                 throw e;
             });
 
+    const processCoiReport = fileBuffers =>
+        Promise.resolve()
+            .then(() => report.status.coi = 'parsing')
+            .then(() => parseCoiFromMemory(fileBuffers))
+            .then(json => {
+                report.status.coi = 'done';
+                report.output.coi = json;
+            })
+            .catch(e => {
+                console.log('COI parser error:', e);
+                report.status.coi = 'failed';
+                report.output.coi = null;
+            });
+
     const prepareData = () =>
         Promise.resolve()
             .then(() => {
@@ -109,6 +127,7 @@ const enqueueReportsProcessing = (files) => {
                 const morganStanleyNewInput = translateMorganStanleyNewReports(report.output.morganStanleyNew);
                 const degiroInput = translateDegiroReports(report.output.degiro);
                 const fidelityInput = translateFidelityReports(report.output.fidelity);
+                const coiInput = translateCoiReport(report.output.coi);
 
                 // Sort entries by date (MM-DD-YYYY) ascending
                 const sortByDate = (a, b) => {
@@ -133,7 +152,8 @@ const enqueueReportsProcessing = (files) => {
                         ...fidelityInput.dividends,
                         ...degiroInput.dividends
                     ].sort(sortByDate),
-                    esppStocks: fidelityInput.esppStocks.sort(sortByDate)
+                    esppStocks: fidelityInput.esppStocks.sort(sortByDate),
+                    coi: coiInput.coi
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
@@ -152,7 +172,8 @@ const enqueueReportsProcessing = (files) => {
         processFidelityReports(fileBuffers),
         processMorganStanleyReports(fileBuffers),
         processMorganStanleyNewReports(fileBuffers),
-        processDegiroReports(fileBuffers)
+        processDegiroReports(fileBuffers),
+        processCoiReport(fileBuffers)
     ])
     .then(() => prepareData())
     .then(() => {
@@ -203,6 +224,7 @@ app.get('/status/:token/json', (req, res) => {
                 morganStanley: report.output.morganStanley,
                 morganStanleyNew: report.output.morganStanleyNew,
                 degiro: report.output.degiro,
+                coi: report.output.coi,
                 excelRaw: report.output.excelRaw
             }
         })

@@ -306,7 +306,11 @@ UI.setupStatusPage = () => {
             // Show year selection UI
             if (json.status.foundYears && json.status.foundYears.length > 0) {
               showYearSelection(json.status.foundYears);
-              spanProgress.innerHTML = 'Status: Select years and click Generate Report';
+              let statusMsg = 'Status: Select years and click Generate Report';
+              if (json.status.coi === 'done' && json.output && json.output.coi) {
+                statusMsg += ' (COI detected: ' + (json.output.coi.employer || 'Unknown') + ')';
+              }
+              spanProgress.innerHTML = statusMsg;
             } else {
               spanProgress.innerHTML = 'Status: No entries found in the uploaded documents';
             }

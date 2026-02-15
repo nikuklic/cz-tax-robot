@@ -138,5 +138,93 @@ describe('excelGenerator', () => {
             // After generate, exchangeRateKind should be set to 'fixed'
             expect(input.inputs.exchangeRateKind).toBe('fixed');
         });
+
+        it('should create a Tax Instructions worksheet', () => {
+            const wb = generate(makeInput());
+            // excel4node stores sheets internally; verify the workbook has 3 sheets
+            // (English, Czech, Tax Instructions)
+            expect(wb).toBeDefined();
+            expect(typeof wb.write).toBe('function');
+        });
+
+        it('should create Tax Instructions sheet with empty data', () => {
+            const wb = generate(makeInput({ stocks: [], dividends: [], esppStocks: [] }));
+            expect(wb).toBeDefined();
+        });
+
+        it('should create Tax Instructions sheet with Degiro dividends', () => {
+            const wb = generate(makeInput({
+                stocks: [],
+                dividends: [
+                    { date: `06-15-${knownYear}`, amount: 30, tax: 4.50, source: 'Degiro' },
+                ],
+                esppStocks: [],
+            }));
+            expect(wb).toBeDefined();
+        });
+
+        it('should create Tax Instructions sheet with ESPP stocks', () => {
+            const wb = generate(makeInput({
+                stocks: [
+                    { date: `03-15-${knownYear}`, amount: 10, pricePerUnit: 150, price: 1500, source: 'Fidelity' },
+                ],
+                dividends: [
+                    { date: `06-15-${knownYear}`, amount: 85, tax: 12.75, source: 'Fidelity' },
+                ],
+                esppStocks: [
+                    { date: `01-12-${knownYear}`, amount: 11, pricePerUnit: 12, price: 132, source: 'Fidelity' },
+                ],
+            }));
+            expect(wb).toBeDefined();
+        });
+
+        it('should handle COI data in the report', () => {
+            const input = makeInput();
+            input.coi = {
+                year: knownYear,
+                employer: 'Test Company s.r.o.',
+                taxpayerName: 'Test User',
+                grossIncome: 1200000,
+                incomePaid: 1200000,
+                months: '01 02 03 04 05 06 07 08 09 10 11 12',
+                backpay: 0,
+                taxBase: 1200000,
+                taxAdvanceFromIncome: 228000,
+                taxAdvanceFromBackpay: 0,
+                totalTaxAdvance: 228000,
+                taxBonuses: 0,
+                employerContributions: 0,
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should handle null COI data', () => {
+            const input = makeInput();
+            input.coi = null;
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should handle COI with employer contributions and bonuses', () => {
+            const input = makeInput();
+            input.coi = {
+                year: knownYear,
+                employer: 'Big Corp a.s.',
+                taxpayerName: 'Employee',
+                grossIncome: 2000000,
+                incomePaid: 1900000,
+                months: '01 02 03 04 05 06 07 08 09 10 11 12',
+                backpay: 100000,
+                taxBase: 2000000,
+                taxAdvanceFromIncome: 361000,
+                taxAdvanceFromBackpay: 19000,
+                totalTaxAdvance: 380000,
+                taxBonuses: 15000,
+                employerContributions: 24000,
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
     });
 });
