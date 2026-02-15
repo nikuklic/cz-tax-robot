@@ -1,8 +1,12 @@
-const config = require('./config.json');
+function getYearFromDate(dateStr) {
+    const match = dateStr.match(/(\d{4})/);
+    return match ? match[1] : null;
+}
 
-function getESPPCount(excelRaw) {
+function getESPPCount(excelRaw, selectedYears) {
     return excelRaw.esppStocks.reduce((acc, esppEntry) => {
-        return acc + (esppEntry.date.includes(config.targetYear) ? 1 : 0);
+        const year = getYearFromDate(esppEntry.date);
+        return acc + (selectedYears.includes(year) ? 1 : 0);
     }, 0);
 }
 
@@ -19,7 +23,23 @@ function getFoundYears(excelRaw) {
     return Array.from(years).sort();
 }
 
+function filterByYears(excelRaw, selectedYears) {
+    const filterEntries = entries =>
+        entries.filter(entry => {
+            const year = getYearFromDate(entry.date);
+            return selectedYears.includes(year);
+        });
+
+    return {
+        ...excelRaw,
+        stocks: filterEntries(excelRaw.stocks),
+        dividends: filterEntries(excelRaw.dividends),
+        esppStocks: filterEntries(excelRaw.esppStocks),
+    };
+}
+
 module.exports = {
     getFoundYears,
-    getESPPCount
+    getESPPCount,
+    filterByYears
 };

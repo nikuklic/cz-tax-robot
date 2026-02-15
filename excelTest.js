@@ -1,9 +1,18 @@
 const { generate } = require("./excelGenerator");
 const config = require('./config.json');
 
+// Get the first known year's rates for the test
+const firstKnownYear = Object.keys(config.exchangeRates).find(y => {
+    const r = config.exchangeRates[y];
+    return typeof r.usdCzk === 'number' && typeof r.eurCzk === 'number';
+});
+const rates = config.exchangeRates[firstKnownYear];
+
 const input = {
     "inputs": {
-        "exchangeRate": config.exchangeRateUsdCzk,
+        "exchangeRatesForYears": {
+            [firstKnownYear]: { usdCzk: rates.usdCzk, eurCzk: rates.eurCzk }
+        },
         "esppDiscount": config.esppDiscount
     },
     "stocks": [{

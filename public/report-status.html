@@ -8,12 +8,20 @@
 <body>
     <div id="app">
         <h1>MDCP Tax Robot</h1>
-        <h3 id="year-warning" style="color: red; display: none">Warning! Some of the documents uploaded are not for the year 2025!
-		Please review the report and delete the lines that are not for 2025 or upload the right statements</h3>
+        <h3 id="year-warning" style="color: red; display: none"></h3>
+		<h3 id="exchange-rate-warning" style="color: orange; display: none"></h3>
 		<h3 id="espp-warning" style="color: red; display: none">ESPP seems correct</h3>
         <h3>Print the downloaded spreadsheet and attach it to your tax form. <a href="/">go back</a></h3>
         <div class="with-border">
             <span id="span-progress">Status: getting the progress..</span>
+
+            <div id="div-year-selection" style="display: none; margin: 15px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                <h4 style="margin-top: 0;">Select years to include in the report:</h4>
+                <div id="year-checkboxes" style="margin: 10px 0;"></div>
+                <button id="btn-generate" style="padding: 8px 20px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 14px;">Generate Report</button>
+                <span id="span-generating" style="display: none; margin-left: 10px;">Generating...</span>
+            </div>
+
             <div id="div-downloads" style="display: none">
                 Download:
                 <a id="a-download-xlsx" download>.XLSX</a>

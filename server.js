@@ -4,6 +4,7 @@ const upload = require('multer')();
 const uuidv4 = require('uuid/v4')
 const config = require('./config.json');
 const app = express()
+app.use(express.json());
 const port = process.env.port || process.env.PORT || 3000;
 
 const { generate } = require('./excelGenerator');
@@ -98,10 +99,10 @@ const enqueueReportsProcessing = (files) => {
                 throw e;
             });
 
-    const generateExcel = () =>
+    const prepareData = () =>
         Promise.resolve()
             .then(() => {
-                report.status.excel = 'generating-excel';
+                report.status.excel = 'awaiting-year-selection';
             })
             .then(() => {
                 const morganStanleyInput = translateMorganStanleyReports(report.output.morganStanley);
@@ -118,8 +119,6 @@ const enqueueReportsProcessing = (files) => {
 
                 const excelGeneratorInput = {
                     inputs: {
-                        exchangeRate: config.exchangeRateUsdCzk,
-                        exchangeRateEur: config.exchangeRateEurCzk,
                         getExchangeRateForDay,
                         esppDiscount: config.esppDiscount,
                     },
@@ -138,10 +137,7 @@ const enqueueReportsProcessing = (files) => {
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
-                report.output.excel = generate(excelGeneratorInput);
                 report.status.foundYears = getFoundYears(excelGeneratorInput);
-				report.status.esppCount = getESPPCount(excelGeneratorInput);
-                report.status.excel = 'done';
             })
             .catch(e => {
                 console.log('Error: ', e);
@@ -158,7 +154,7 @@ const enqueueReportsProcessing = (files) => {
         processMorganStanleyNewReports(fileBuffers),
         processDegiroReports(fileBuffers)
     ])
-    .then(() => generateExcel())
+    .then(() => prepareData())
     .then(() => {
         report.status.aggregate = 'done';
     })
@@ -175,10 +171,10 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const { getFoundYears, getESPPCount } = require('./serverHelpers');
+const { getFoundYears, getESPPCount, filterByYears } = require('./serverHelpers');
 
 app.get('/api/config', (req, res) => {
-    res.json({ targetYear: config.targetYear });
+    res.json({ exchangeRates: config.exchangeRates });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -212,6 +208,75 @@ app.get('/status/:token/json', (req, res) => {
         })
     } else {
         res.status(404);
+    }
+});
+
+app.post('/status/:token/select-years', (req, res) => {
+    const report = getReport(req.params.token);
+    if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+    }
+    if (!report.output.excelRaw) {
+        return res.status(400).json({ error: 'Report data not ready yet' });
+    }
+
+    const { selectedYears } = req.body;
+    if (!Array.isArray(selectedYears) || selectedYears.length === 0) {
+        return res.status(400).json({ error: 'selectedYears must be a non-empty array' });
+    }
+
+    try {
+        report.status.excel = 'generating-excel';
+
+        const filtered = filterByYears(report.output.excelRaw, selectedYears);
+
+        // Build per-year exchange rates for the excel generator
+        const exchangeRatesForYears = {};
+        const warnings = [];
+        selectedYears.forEach(year => {
+            const rates = config.exchangeRates[year];
+            if (!rates) {
+                exchangeRatesForYears[year] = { usdCzk: 0, eurCzk: 0 };
+                warnings.push(`No exchange rate configured for year ${year}. CZK values will be 0.`);
+            } else {
+                const usd = rates.usdCzk === 'unknown' ? 0 : rates.usdCzk;
+                const eur = rates.eurCzk === 'unknown' ? 0 : rates.eurCzk;
+                exchangeRatesForYears[year] = { usdCzk: usd, eurCzk: eur };
+                if (rates.usdCzk === 'unknown' || rates.eurCzk === 'unknown') {
+                    warnings.push(`Exchange rate for year ${year} is unknown. CZK values for that year will be 0. Please update config.json.`);
+                }
+            }
+        });
+
+        // Check if any Degiro entries exist (they use EUR rates)
+        const hasEurEntries = filtered.dividends.some(d => d.source === 'Degiro')
+            || filtered.stocks.some(s => s.source === 'Degiro');
+
+        filtered.inputs = {
+            ...filtered.inputs,
+            exchangeRatesForYears,
+            getExchangeRateForDay,
+            hasEurEntries,
+        };
+
+        report.output.excelRaw = filtered;
+        report.output.excel = generate(filtered);
+        report.status.foundYears = getFoundYears(filtered);
+        report.status.selectedYears = selectedYears;
+        report.status.esppCount = getESPPCount(filtered, selectedYears);
+        report.status.exchangeRateWarnings = warnings;
+        report.status.excel = 'done';
+
+        res.json({
+            status: report.status,
+            warnings,
+            hasEurEntries
+        });
+    } catch (e) {
+        console.log('Error generating excel:', e);
+        report.status.excel = 'failed';
+        report.output.excel = e.message;
+        res.status(500).json({ error: e.message });
     }
 });
 

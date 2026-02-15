@@ -15,6 +15,7 @@ function getTable(pathOrBuffer) {
         let isParsing = false;
         let isDegiro = false;
         let isStatement = false;
+        let degiroYear = null;
         let table;
 
         const reader = new PdfReader();
@@ -29,6 +30,10 @@ function getTable(pathOrBuffer) {
             } else if (item && item.text) {
                 if (item.text.toLowerCase().includes('date range from 1 January up to and including 31 December'.toLowerCase())) {
                     isDegiro = true;
+                    const yearMatch = item.text.match(/(\d{4})/);
+                    if (yearMatch) {
+                        degiroYear = yearMatch[1];
+                    }
                 }
 
                 if (isDegiro && item.text.includes('Country')) {
@@ -39,7 +44,7 @@ function getTable(pathOrBuffer) {
 
                 if (isParsing && item.text.includes('Coupon overview in EUR')) {
                     isParsing = false;
-                    resolve(table.getMatrix());
+                    resolve({ table: table.getMatrix(), year: degiroYear });
                 }
 
                 if (isParsing) {
@@ -117,7 +122,7 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
         .map(fileName => path.join(absolutePathToReportsDirectory, fileName))
         .map(filePath => {
             return getTable(filePath)
-                .then(table => {
+                .then(({ table, year }) => {
                     // remove outlier 'Gross'
                     table.shift();
 
@@ -126,6 +131,7 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
 
                     return {
                         file: filePath,
+                        year,
                         report: extractTransactions(normalizedTable)
                     };
                     // pprint(table);
@@ -139,7 +145,7 @@ function parseFromMemory(buffers) {
     const getSummaryOfMonthlyReports = buffers
         .map(buffer => {
             return getTable(buffer)
-                .then(table => {
+                .then(({ table, year }) => {
                     // remove outlier 'Gross'
                     table.shift();
 
@@ -147,6 +153,7 @@ function parseFromMemory(buffers) {
                     let normalizedTable = table.map(row => row[0]);
 
                     return {
+                        year,
                         report: extractTransactions(normalizedTable)
                     };
                 })

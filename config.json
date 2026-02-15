@@ -1,6 +1,9 @@
 {
-    "targetYear": "2025",
-    "exchangeRateUsdCzk": 21.84,
-    "exchangeRateEurCzk": 24.66,
+    "exchangeRates": {
+        "2025": { "usdCzk": 21.84, "eurCzk": 24.66 },
+        "2024": { "usdCzk": 23.15, "eurCzk": 25.08 },
+        "2023": { "usdCzk": "unknown", "eurCzk": "unknown" },
+        "2022": { "usdCzk": "unknown", "eurCzk": "unknown" }
+    },
     "esppDiscount": 10
 }

@@ -133,16 +133,22 @@ UI.setupStatusPage = () => {
   const divDownloads = document.getElementById("div-downloads");
   const spanProgress = document.getElementById("span-progress");
   const yearWarning = document.getElementById("year-warning");
+  const exchangeRateWarning = document.getElementById("exchange-rate-warning");
   const esppWarning = document.getElementById("espp-warning");
+  const divYearSelection = document.getElementById("div-year-selection");
+  const yearCheckboxes = document.getElementById("year-checkboxes");
+  const btnGenerate = document.getElementById("btn-generate");
+  const spanGenerating = document.getElementById("span-generating");
 
-  let appTargetYear = '';
+  let appExchangeRates = {};
   fetch('/api/config')
     .then(r => r.json())
-    .then(c => { appTargetYear = c.targetYear; })
-    .catch(() => { appTargetYear = ''; });
+    .then(c => { appExchangeRates = c.exchangeRates || {}; })
+    .catch(() => { appExchangeRates = {}; });
 
   const state = {
     done: false,
+    yearSelectionShown: false,
     detailsAreVisible: false
   };
 
@@ -159,6 +165,119 @@ UI.setupStatusPage = () => {
     UI.customalert('Disclaimer: Tax Robot and all related services and information are provided on an "as is" and "as available" basis without any warranties of any kind.');
     aDownloadXlsx.click();
   };
+
+  const currentYear = new Date().getFullYear();
+  const previousYear = String(currentYear - 1);
+
+  const showYearSelection = (foundYears) => {
+    if (state.yearSelectionShown) return;
+    state.yearSelectionShown = true;
+
+    yearCheckboxes.innerHTML = '';
+    const sortedYears = foundYears.slice().sort().reverse();
+
+    sortedYears.forEach(year => {
+      const rateInfo = appExchangeRates[year];
+      let rateLabel = '';
+      if (!rateInfo) {
+        rateLabel = ' (no exchange rate configured)';
+      } else if (rateInfo.usdCzk === 'unknown' || rateInfo.eurCzk === 'unknown') {
+        rateLabel = ' (exchange rate unknown)';
+      } else {
+        rateLabel = ` (USD-CZK: ${rateInfo.usdCzk})`;
+      }
+
+      const div = document.createElement('div');
+      div.style.margin = '5px 0';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = year;
+      cb.id = 'year-' + year;
+      // Pre-check the previous year
+      if (year === previousYear) {
+        cb.checked = true;
+      }
+      const label = document.createElement('label');
+      label.htmlFor = 'year-' + year;
+      label.style.marginLeft = '6px';
+      label.textContent = year + rateLabel;
+
+      if (!rateInfo || rateInfo.usdCzk === 'unknown') {
+        label.style.color = '#cc6600';
+      }
+
+      div.appendChild(cb);
+      div.appendChild(label);
+      yearCheckboxes.appendChild(div);
+    });
+
+    divYearSelection.style.display = 'block';
+  };
+
+  const getSelectedYears = () => {
+    const checkboxes = yearCheckboxes.querySelectorAll('input[type=checkbox]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+  };
+
+  btnGenerate.addEventListener('click', () => {
+    const selectedYears = getSelectedYears();
+    if (selectedYears.length === 0) {
+      UI.customalert('Please select at least one year.');
+      return;
+    }
+
+    btnGenerate.disabled = true;
+    spanGenerating.style.display = 'inline';
+
+    fetch(location.href + '/select-years', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedYears })
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to generate report');
+        return r.json();
+      })
+      .then(result => {
+        spanGenerating.style.display = 'none';
+        divYearSelection.style.display = 'none';
+
+        // Show year info
+        const selectedStr = selectedYears.sort().join(', ');
+        yearWarning.style.display = 'block';
+        yearWarning.style.color = '#333';
+        let yearInfo = 'Report generated for year(s): ' + selectedStr;
+        if (result.hasEurEntries) {
+          yearInfo += ' (includes Degiro EUR entries)';
+        }
+        yearWarning.innerHTML = yearInfo;
+
+        // Show exchange rate warnings if any
+        if (result.warnings && result.warnings.length > 0) {
+          exchangeRateWarning.style.display = 'block';
+          exchangeRateWarning.innerHTML = 'Warning: ' + result.warnings.join('<br>Warning: ');
+        }
+
+        // ESPP warning: expect 4 purchases per selected year
+        const status = result.status;
+        const expectedEspp = 4 * selectedYears.length;
+        if (status.esppCount !== undefined && status.esppCount !== expectedEspp) {
+          esppWarning.style.display = 'block';
+          esppWarning.innerHTML = 'Warning: The number of ESPP purchases for the selected year(s) is ' + status.esppCount + ' (expected ' + expectedEspp + ' for ' + selectedYears.length + ' year(s)), make sure you uploaded the right statements';
+        }
+
+        state.done = true;
+        divDownloads.style.display = 'block';
+        aDownloadJson.href = location.href + "/json";
+        aDownloadXlsx.href = location.href + "/xlsx";
+        delay(100).then(downloadReport);
+      })
+      .catch(err => {
+        spanGenerating.style.display = 'none';
+        btnGenerate.disabled = false;
+        UI.customalert('Error generating report: ' + err.message);
+      });
+  });
 
   const updateInterval = setInterval(() => {
     fetch(location.href + "/json")
@@ -183,24 +302,22 @@ UI.setupStatusPage = () => {
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
 
-          if (json.status.foundYears && json.status.foundYears.length > 0) {
-            const otherYears = json.status.foundYears.filter(y => y !== appTargetYear);
-            if (otherYears.length > 0) {
-              yearWarning.style.display = 'block';
-              yearWarning.innerHTML = 'Warning: Entries found for year(s): ' + json.status.foundYears.join(', ') + ', you might want to remove the ones that you do not want there';
+          if (json.status.excel === 'awaiting-year-selection') {
+            // Show year selection UI
+            if (json.status.foundYears && json.status.foundYears.length > 0) {
+              showYearSelection(json.status.foundYears);
+              spanProgress.innerHTML = 'Status: Select years and click Generate Report';
+            } else {
+              spanProgress.innerHTML = 'Status: No entries found in the uploaded documents';
             }
+          } else if (json.status.excel === 'done') {
+            // Excel already generated (shouldn't happen in new flow, but handle it)
+            state.done = true;
+            divDownloads.style.display = 'block';
+            aDownloadJson.href = location.href + "/json";
+            aDownloadXlsx.href = location.href + "/xlsx";
+            delay(100).then(downloadReport);
           }
-
-		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {
-			esppWarning.style.display = 'block';
-			esppWarning.innerHTML = 'Warning: The number of ESPP purchases for ' + appTargetYear + ' is ' + json.status.esppCount + ' (expected 4), make sure you uploaded the right statements';
-		  }
-
-          state.done = true;
-          divDownloads.style.display = 'block';
-          aDownloadJson.href = location.href + "/json";
-          aDownloadXlsx.href = location.href + "/xlsx";
-          delay(100).then(downloadReport);
         }
 
         if (json.status.aggregate === "failed") {
