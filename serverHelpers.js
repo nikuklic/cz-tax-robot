@@ -6,17 +6,20 @@ function getESPPCount(excelRaw) {
     }, 0);
 }
 
-function isYearWrong(excelRaw) {
-    let res = false;
+function getFoundYears(excelRaw) {
+    const years = new Set();
     [excelRaw.stocks, excelRaw.dividends, excelRaw.esppStocks].forEach(entries => {
-        if (entries.some(entry => !entry.date.includes(config.targetYear))) {
-            res = true;
-        }
+        entries.forEach(entry => {
+            const match = entry.date.match(/(\d{4})/);
+            if (match) {
+                years.add(match[1]);
+            }
+        });
     });
-    return res;
+    return Array.from(years).sort();
 }
 
 module.exports = {
-    isYearWrong,
+    getFoundYears,
     getESPPCount
 };

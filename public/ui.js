@@ -183,8 +183,12 @@ UI.setupStatusPage = () => {
         if (json.status.aggregate === "done") {
           clearTimeout(updateInterval);
 
-          if (json.status.yearWarning) {
-            yearWarning.style.display = 'block';
+          if (json.status.foundYears && json.status.foundYears.length > 0) {
+            const otherYears = json.status.foundYears.filter(y => y !== appTargetYear);
+            if (otherYears.length > 0) {
+              yearWarning.style.display = 'block';
+              yearWarning.innerHTML = 'Warning: Entries found for year(s): ' + json.status.foundYears.join(', ') + ', you might want to remove the ones that you do not want there';
+            }
           }
 
 		  if (json.status.esppCount === 0 || json.status.esppCount !== 4) {

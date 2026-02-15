@@ -212,7 +212,7 @@ const populateWorksheet = (ws, input, locale) => {
 
     rowCursor += SKIP_HEADER;
     input.stocks.sort(compareDates).forEach((s, i) => {
-        ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
+        ws.cell(rowCursor + i, 1).string(s.date);
         const style = s.source === 'Degiro' ? EUR : USD;
         ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
         ws.cell(rowCursor + i, 3).number(s.price).style(style);
@@ -245,7 +245,7 @@ const populateWorksheet = (ws, input, locale) => {
 
     rowCursor += SKIP_HEADER;
     input.dividends.sort(compareDates).forEach((d, i) => {
-        ws.cell(rowCursor + i, 1).string(d.date).style(d.date.indexOf(targetYear) < 0 ? WARNING : {});
+        ws.cell(rowCursor + i, 1).string(d.date);
         ws.cell(rowCursor + i, 2).string(d.source);
         const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForSource(d.source));
         const style = d.source === 'Degiro' ? EUR : USD;
@@ -284,7 +284,7 @@ const populateWorksheet = (ws, input, locale) => {
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort(compareDates).forEach((s, i) => {
-            ws.cell(rowCursor + i, 1).string(s.date).style(s.date.indexOf(targetYear) < 0 ? WARNING : {});
+            ws.cell(rowCursor + i, 1).string(s.date);
             const style = s.source === 'Degiro' ? EUR : USD;
             ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
             ws.cell(rowCursor + i, 3).number(s.price).style(style);

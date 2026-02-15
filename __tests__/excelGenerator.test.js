@@ -84,7 +84,7 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
-        it('should handle dates outside target year (WARNING style)', () => {
+        it('should handle dates outside target year', () => {
             const wb = generate(makeInput({
                 stocks: [
                     { date: '03-15-2020', amount: 10, pricePerUnit: 150, price: 1500, source: 'Fidelity' },

@@ -139,7 +139,7 @@ const enqueueReportsProcessing = (files) => {
 
                 report.output.excelRaw = excelGeneratorInput;
                 report.output.excel = generate(excelGeneratorInput);
-                report.status.yearWarning = isYearWrong(excelGeneratorInput);
+                report.status.foundYears = getFoundYears(excelGeneratorInput);
 				report.status.esppCount = getESPPCount(excelGeneratorInput);
                 report.status.excel = 'done';
             })
@@ -175,7 +175,7 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const { isYearWrong, getESPPCount } = require('./serverHelpers');
+const { getFoundYears, getESPPCount } = require('./serverHelpers');
 
 app.get('/api/config', (req, res) => {
     res.json({ targetYear: config.targetYear });
