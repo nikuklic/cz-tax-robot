@@ -65,7 +65,7 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
-        it('should handle Degiro source with EUR styling', () => {
+        it('should handle Degiro source with CZK styling (no exchange rate conversion)', () => {
             const wb = generate(makeInput({
                 stocks: [
                     { date: `03-15-${knownYear}`, amount: 5, pricePerUnit: 50, price: 250, source: 'Degiro' },

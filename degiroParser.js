@@ -10,6 +10,32 @@ const DegiroTransaction = {
     netDividend: 'Net dividend'
 };
 
+// Map Czech column headers to standard DegiroTransaction keys
+const czechHeaderMap = {
+    'Země': 'Country',
+    'Hrubá dividenda': 'Gross dividend',
+    'Srážková daň': 'Withholding Tax',
+    'Čistá dividenda': 'Net dividend',
+};
+
+function isDegiroMarker(text) {
+    const lower = text.toLowerCase();
+    // English format
+    if (lower.includes('date range from 1 january up to and including 31 december')) return true;
+    // Czech format
+    if (lower.includes('fiskální rok') || lower.includes('daňový výkaz')) return true;
+    return false;
+}
+
+function isDividendTableStart(text) {
+    return text === 'Country' || text === 'Země';
+}
+
+function isDividendTableEnd(text) {
+    const lower = text.toLowerCase();
+    return lower.includes('coupon overview') || lower.includes('přehled kupónových daní');
+}
+
 function getTable(pathOrBuffer) {
     return new Promise((resolve, reject) => {
         let isParsing = false;
@@ -17,6 +43,7 @@ function getTable(pathOrBuffer) {
         let isStatement = false;
         let degiroYear = null;
         let table;
+        let resolved = false;
 
         const reader = new PdfReader();
         const parseFn = typeof pathOrBuffer === 'string'
@@ -24,11 +51,13 @@ function getTable(pathOrBuffer) {
             : reader.parseBuffer;
 
         parseFn.call(reader, pathOrBuffer, (err, item) => {
+            if (resolved) return;
+
             if (err) {
                 reject(err);
                 console.error(err);
             } else if (item && item.text) {
-                if (item.text.toLowerCase().includes('date range from 1 January up to and including 31 December'.toLowerCase())) {
+                if (isDegiroMarker(item.text)) {
                     isDegiro = true;
                     const yearMatch = item.text.match(/(\d{4})/);
                     if (yearMatch) {
@@ -36,15 +65,17 @@ function getTable(pathOrBuffer) {
                     }
                 }
 
-                if (isDegiro && item.text.includes('Country')) {
+                if (isDegiro && !isParsing && isDividendTableStart(item.text)) {
                     isStatement = true;
                     isParsing = true;
                     table = new TableParser(); // new/clear table for next page
                 }
 
-                if (isParsing && item.text.includes('Coupon overview in EUR')) {
+                if (isParsing && isDividendTableEnd(item.text)) {
                     isParsing = false;
+                    resolved = true;
                     resolve({ table: table.getMatrix(), year: degiroYear });
+                    return;
                 }
 
                 if (isParsing) {
@@ -53,6 +84,9 @@ function getTable(pathOrBuffer) {
             } else if (!item) {
                 if (!isDegiro || !isStatement) {
                     reject('notDegiro');
+                } else if (isParsing && table) {
+                    // End of document reached while still in dividend section
+                    resolve({ table: table.getMatrix(), year: degiroYear });
                 } else {
                     reject('could not find any entries');
                 }
@@ -72,16 +106,34 @@ function sanitizeTextValue(text) {
     return text.replace(/\//g, '-');
 }
 
+function sanitizeNumericValue(value) {
+    if (!value) return value;
+    // Handle Czech format: "2 901,01" → strip spaces, replace comma with dot
+    // Handle English format: "1,121.88" → strip commas
+    if (value.includes(',') && !value.includes('.')) {
+        // Czech format: space as thousands separator, comma as decimal
+        value = value.replace(/\s/g, '').replace(',', '.');
+    } else {
+        // English format: comma as thousands separator, dot as decimal
+        value = value.split(',').join('');
+    }
+    return value;
+}
+
 function sanitizeTransaction(transaction) {
     [DegiroTransaction.grossDividend, DegiroTransaction.netDividend, DegiroTransaction.withholdingTax].forEach(property => {
         let value = transaction[property];
         if (value) {
-            value = value.split(',').join('');
-            transaction[property] = parseFloat(value);
+            transaction[property] = parseFloat(sanitizeNumericValue(value));
         }
     });
 
     return transaction;
+}
+
+function normalizeHeaderName(headerText) {
+    const trimmed = headerText.trim();
+    return czechHeaderMap[trimmed] || trimmed;
 }
 
 function extractTransactions(table) {
@@ -94,11 +146,10 @@ function extractTransactions(table) {
        }
        let transaction = {};
        row.forEach(entry => {
-           // console.log(`x: ${entry.x} y: ${entry.y} w: ${entry.w}`);
            let header = headers.find(header => {
                return Math.abs(header.x - entry.x) < alignmentTolerance;
            });
-           const headerName = header ? header.text.trim() : 'error';
+           const headerName = header ? normalizeHeaderName(header.text) : 'error';
            transaction[headerName] = sanitizeTextValue(entry.text);
        });
         transactions.push(sanitizeTransaction(transaction));
@@ -108,7 +159,8 @@ function extractTransactions(table) {
         throw `No transaction found for table with header: ${headers.map(entry => entry.text)}`
     }
 
-    transactions.pop(); // remove duplicated line
+    // Remove totals row (last row with CZK labels or aggregate values)
+    transactions.pop();
     return transactions;
 }
 
@@ -123,10 +175,7 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
         .map(filePath => {
             return getTable(filePath)
                 .then(({ table, year }) => {
-                    // remove outlier 'Gross'
-                    table.shift();
-
-                    // normalize
+                    // normalize: each row's items are nested in row[0]
                     let normalizedTable = table.map(row => row[0]);
 
                     return {
@@ -134,7 +183,6 @@ function parseMorganStanleyReports(absolutePathToReportsDirectory) {
                         year,
                         report: extractTransactions(normalizedTable)
                     };
-                    // pprint(table);
                 });
             });
 
@@ -146,10 +194,7 @@ function parseFromMemory(buffers) {
         .map(buffer => {
             return getTable(buffer)
                 .then(({ table, year }) => {
-                    // remove outlier 'Gross'
-                    table.shift();
-
-                    // normalize
+                    // normalize: each row's items are nested in row[0]
                     let normalizedTable = table.map(row => row[0]);
 
                     return {

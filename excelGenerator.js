@@ -331,6 +331,9 @@ const populateWorksheet = (ws, input, locale) => {
         return parts[2];
     };
 
+    // Helper: check if source provides amounts already in CZK (no conversion needed)
+    const isSourceCZK = (source) => source === 'Degiro';
+
     // Helper: get exchange rate cell ref for a given entry
     const exchangeRateCoordsForEntry = (source, dateString) => {
         const year = getYearFromDate(dateString);
@@ -339,11 +342,7 @@ const populateWorksheet = (ws, input, locale) => {
             // Fallback: first available
             const firstKey = Object.keys(yearExchangeRateRows)[0];
             const fallback = yearExchangeRateRows[firstKey];
-            if (source === 'Degiro' && fallback.eurRow) return [fallback.eurRow, 2];
             return [fallback.usdRow, 2];
-        }
-        if (source === 'Degiro' && yearRows.eurRow) {
-            return [yearRows.eurRow, 2];
         }
         return [yearRows.usdRow, 2];
     };
@@ -363,14 +362,18 @@ const populateWorksheet = (ws, input, locale) => {
     rowCursor += SKIP_HEADER;
     input.stocks.sort(compareDates).forEach((s, i) => {
         ws.cell(rowCursor + i, 1).string(s.date);
-        const style = s.source === 'Degiro' ? EUR : USD;
+        const style = isSourceCZK(s.source) ? CZK : USD;
         ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
         ws.cell(rowCursor + i, 3).number(s.price).style(style);
         ws.cell(rowCursor + i, 4).number(s.amount);
 
         const price = xl.getExcelCellRef(rowCursor + i, 3);
-        const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
-        ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+        if (isSourceCZK(s.source)) {
+            ws.cell(rowCursor + i, 5).formula(`${price}`).style(CZK);
+        } else {
+            const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
+            ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+        }
     });
 
     ws.cell(rowCursor + input.stocks.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -397,14 +400,19 @@ const populateWorksheet = (ws, input, locale) => {
     input.dividends.sort(compareDates).forEach((d, i) => {
         ws.cell(rowCursor + i, 1).string(d.date);
         ws.cell(rowCursor + i, 2).string(d.source);
-        const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(d.source, d.date));
-        const style = d.source === 'Degiro' ? EUR : USD;
+        const style = isSourceCZK(d.source) ? CZK : USD;
         ws.cell(rowCursor + i, 3).number(d.amount).style(style);
         const dividends = xl.getExcelCellRef(rowCursor + i, 3);
-        ws.cell(rowCursor + i, 4).formula(`${dividends}*${exchangeRate}`).style(CZK);
         ws.cell(rowCursor + i, 5).number(d.tax).style(style);
         const tax = xl.getExcelCellRef(rowCursor + i, 5);
-        ws.cell(rowCursor + i, 6).formula(`${tax}*${exchangeRate}`).style(CZK);
+        if (isSourceCZK(d.source)) {
+            ws.cell(rowCursor + i, 4).formula(`${dividends}`).style(CZK);
+            ws.cell(rowCursor + i, 6).formula(`${tax}`).style(CZK);
+        } else {
+            const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(d.source, d.date));
+            ws.cell(rowCursor + i, 4).formula(`${dividends}*${exchangeRate}`).style(CZK);
+            ws.cell(rowCursor + i, 6).formula(`${tax}*${exchangeRate}`).style(CZK);
+        }
     });
 
     ws.cell(rowCursor + input.dividends.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -435,14 +443,18 @@ const populateWorksheet = (ws, input, locale) => {
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort(compareDates).forEach((s, i) => {
             ws.cell(rowCursor + i, 1).string(s.date);
-            const style = s.source === 'Degiro' ? EUR : USD;
+            const style = isSourceCZK(s.source) ? CZK : USD;
             ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
             ws.cell(rowCursor + i, 3).number(s.price).style(style);
             ws.cell(rowCursor + i, 4).number(s.amount);
 
             const price = xl.getExcelCellRef(rowCursor + i, 3);
-            const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
-            ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+            if (isSourceCZK(s.source)) {
+                ws.cell(rowCursor + i, 5).formula(`${price}`).style(CZK);
+            } else {
+                const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
+                ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+            }
         });
 
         ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
