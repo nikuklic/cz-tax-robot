@@ -91,6 +91,11 @@ const LIGHT_GRAY = {
 const GREEN_CZK = { ...GREEN, ...CZK };
 const GREEN_TITLE = { ...GREEN, ...TITLE };
 
+const PLAIN_NUMBER = {
+    numberFormat: '0'
+};
+const GREEN_PLAIN_NUMBER = { ...GREEN, ...PLAIN_NUMBER };
+
 // Sort by date in MM-DD-YYYY format chronologically (year, month, day)
 const compareDates = (a, b) => {
     const [am, ad, ay] = a.date.split('-').map(Number);
@@ -620,21 +625,21 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string(locale.coiGrossIncome).style(TITLE);
         ws.cell(row, 3).string('COI ř.1 – Total gross employment income');
-        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiGrossIncome)},2)`).style(CZK);
+        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiGrossIncome)},0)`).style(PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
 
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string(locale.coiTaxBase).style(TITLE);
         ws.cell(row, 3).string('COI ř.5 – Employment tax base');
-        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTaxBase)},2)`).style(CZK);
+        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTaxBase)},0)`).style(PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
 
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string(locale.coiTaxAdvance).style(TITLE);
         ws.cell(row, 3).string('COI ř.8 – Total tax advances withheld by employer');
-        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTotalTaxAdvance)},2)`).style(GREEN_CZK);
+        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTotalTaxAdvance)},0)`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('This credit reduces your final tax liability');
         row += 1;
 
@@ -642,7 +647,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
             ws.cell(row, 1).string('');
             ws.cell(row, 2).string(locale.coiTaxBonuses).style(TITLE);
             ws.cell(row, 3).string('COI ř.9 – Monthly tax bonuses paid');
-            ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTaxBonuses)},2)`).style(CZK);
+            ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTaxBonuses)},0)`).style(PLAIN_NUMBER);
             ws.cell(row, 5).string('');
             row += 1;
         }
@@ -651,7 +656,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
             ws.cell(row, 1).string('');
             ws.cell(row, 2).string(locale.coiEmployerContributions).style(TITLE);
             ws.cell(row, 3).string('COI ř.10 – Employer pension/insurance contributions');
-            ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiEmployerContributions)},2)`).style(CZK);
+            ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiEmployerContributions)},0)`).style(PLAIN_NUMBER);
             ws.cell(row, 5).string('');
             row += 1;
         }
@@ -672,9 +677,9 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 2).string(locale.taxRow31).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow31Desc);
     ws.cell(row, 4).formula(hasCoi
-        ? `ROUND(${enRef(refs.coiGrossIncome)}+${enRef(refs.overallStocksCzk)},2)`
-        : `ROUND(${enRef(refs.overallStocksCzk)},2)`
-    ).style(GREEN_CZK);
+        ? `ROUND(${enRef(refs.coiGrossIncome)}+${enRef(refs.overallStocksCzk)},0)`
+        : `ROUND(${enRef(refs.overallStocksCzk)},0)`
+    ).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(hasCoi
         ? 'Auto-computed from English sheet: COI ř.1 + Stock/ESPP income'
         : locale.taxRow31Note);
@@ -684,7 +689,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow35).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow35Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallStocksCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallStocksCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(locale.taxRow35Note);
     row += 1;
 
@@ -723,7 +728,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow38).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow38Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 1;
 
@@ -731,7 +736,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow321).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow321Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 1;
 
@@ -739,7 +744,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow323).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow323Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},0)`).style(PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 2;
 
@@ -755,7 +760,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow401).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow401Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 1;
 
@@ -763,7 +768,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow412).style(TITLE);
     ws.cell(row, 3).string(locale.taxRow412Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 2;
 
@@ -797,12 +802,12 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxAtt3Col4);
     ws.cell(row, 3).string('');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},0)`).style(PLAIN_NUMBER);
     row += 1;
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxAtt3Col5);
     ws.cell(row, 3).string('');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(PLAIN_NUMBER);
     row += 2;
 
     ws.cell(row, 1).string('');
@@ -815,12 +820,12 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow401);
     ws.cell(row, 3).string('Dividend income (CZK)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     row += 1;
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow412);
     ws.cell(row, 3).string('Tax withheld (CZK)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     row += 2;
 
     // === SECTION: Summary ===
@@ -835,32 +840,32 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string('Row 31 (COI + Stocks)').style(TITLE);
         ws.cell(row, 3).string('COI gross income + Stock/ESPP income = Total for Row 31');
-        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiGrossIncome)}+${enRef(refs.overallStocksCzk)},2)`).style(GREEN_CZK);
+        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiGrossIncome)}+${enRef(refs.overallStocksCzk)},0)`).style(GREEN_PLAIN_NUMBER);
         row += 1;
 
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string('COI Tax Advances (ř.8)').style(TITLE);
         ws.cell(row, 3).string('Tax already withheld by employer – credit against your tax liability');
-        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTotalTaxAdvance)},2)`).style(GREEN_CZK);
+        ws.cell(row, 4).formula(`ROUND(${enRef(refs.coiTotalTaxAdvance)},0)`).style(GREEN_PLAIN_NUMBER);
         row += 1;
     }
 
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.overallStocksCZK).style(TITLE);
     ws.cell(row, 3).string(hasCoi ? 'Stock/ESPP income (included in Row 31 above)' : 'Add to Row 31 and enter in Row 35');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallStocksCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallStocksCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     row += 1;
 
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.overallDividendsCZK).style(TITLE);
     ws.cell(row, 3).string('Use in Attachment 3 (Row 321) or Attachment 4 (Row 401/406/411)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     row += 1;
 
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.overallTaxCZK).style(TITLE);
     ws.cell(row, 3).string('Use in Attachment 3 (Row 323) or Attachment 4 (Row 412)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(GREEN_CZK);
+    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},0)`).style(GREEN_PLAIN_NUMBER);
     row += 1;
 };
 
