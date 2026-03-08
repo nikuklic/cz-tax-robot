@@ -206,6 +206,175 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
+        it('should not create Crypto sheet when crypto is null', () => {
+            const input = makeInput();
+            input.crypto = null;
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should not create Crypto sheet when crypto has no transactions and no income transactions', () => {
+            const input = makeInput();
+            input.crypto = { transactions: [], incomeTransactions: [] };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should create Crypto sheet when only incomeTransactions present (no capital gains)', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [],
+                incomeTransactions: [
+                    { date: `02-16-${knownYear}`, asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should create Crypto sheet when crypto transactions are present', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [
+                    {
+                        dateSold: `01-09-${knownYear}`,
+                        dateAcquired: `02-20-${knownYear - 1}`,
+                        asset: 'ETH',
+                        amount: 1.5,
+                        cost: 1000,
+                        proceeds: 2000,
+                        gain: 1000,
+                        holdingPeriod: 'Short-term',
+                    },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should create Crypto sheet when both transactions and incomeTransactions are present', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [
+                    {
+                        dateSold: `01-09-${knownYear}`,
+                        dateAcquired: `02-20-${knownYear - 1}`,
+                        asset: 'ETH',
+                        amount: 1.5,
+                        cost: 1000,
+                        proceeds: 2000,
+                        gain: 1000,
+                        holdingPeriod: 'Short-term',
+                    },
+                ],
+                incomeTransactions: [
+                    { date: `02-16-${knownYear}`, asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
+                    { date: `03-01-${knownYear}`, asset: 'ETH', amount: 0.05, value: 80.00, type: 'Staking' },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should generate Crypto sheet with Long-term transactions', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [
+                    {
+                        dateSold: `01-09-${knownYear}`,
+                        dateAcquired: `01-01-${knownYear - 4}`,
+                        asset: 'BTC',
+                        amount: 0.5,
+                        cost: 5000,
+                        proceeds: 20000,
+                        gain: 15000,
+                        holdingPeriod: 'Long-term',
+                    },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should generate Crypto sheet with mixed Short/Long-term transactions', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [
+                    {
+                        dateSold: `06-01-${knownYear}`,
+                        dateAcquired: `01-01-${knownYear}`,
+                        asset: 'ETH',
+                        amount: 2,
+                        cost: 500,
+                        proceeds: 600,
+                        gain: 100,
+                        holdingPeriod: 'Short-term',
+                    },
+                    {
+                        dateSold: `06-01-${knownYear}`,
+                        dateAcquired: `01-01-${knownYear - 5}`,
+                        asset: 'ADA',
+                        amount: 1000,
+                        cost: 200,
+                        proceeds: 900,
+                        gain: 700,
+                        holdingPeriod: 'Long-term',
+                    },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should generate Crypto sheet with transactions containing negative gains', () => {
+            const input = makeInput();
+            input.crypto = {
+                transactions: [
+                    {
+                        dateSold: `03-15-${knownYear}`,
+                        dateAcquired: `06-01-${knownYear - 1}`,
+                        asset: 'XTZ',
+                        amount: 10,
+                        cost: 50,
+                        proceeds: 12,
+                        gain: -38,
+                        holdingPeriod: 'Short-term',
+                    },
+                ],
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should handle Crypto sheet with zero EUR-CZK rate (missing config)', () => {
+            const input = {
+                inputs: {
+                    exchangeRatesForYears: {},
+                    getExchangeRateForDay: () => 22.0,
+                    esppDiscount: config.esppDiscount,
+                },
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        {
+                            dateSold: `01-09-${knownYear}`,
+                            dateAcquired: `02-20-${knownYear - 1}`,
+                            asset: 'ETH',
+                            amount: 1,
+                            cost: 100,
+                            proceeds: 200,
+                            gain: 100,
+                            holdingPeriod: 'Short-term',
+                        },
+                    ],
+                },
+            };
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
         it('should handle COI with employer contributions and bonuses', () => {
             const input = makeInput();
             input.coi = {

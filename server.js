@@ -19,6 +19,7 @@ const { parseFromMemory: parseDegiroFromMemory  } = require('./degiroParser');
 const { translateDegiroReports  } = require('./degiroTranslator');
 const { parseFromMemory: parseCoiFromMemory } = require('./coiParser');
 const { translateCoiReport } = require('./coiTranslator');
+const { parseFromMemory: parseCryptoFifoFromMemory } = require('./cryptoFifoParser');
 
 const processing_queue = {};
 const getReport = token => processing_queue[token];
@@ -35,6 +36,7 @@ const enqueueReportsProcessing = (files) => {
             morganStanleyNew: 'none',
             degiro: 'none',
             coi: 'none',
+            crypto: 'none',
             excel: 'waiting',
             aggregate: 'in-progress'
         },
@@ -44,6 +46,7 @@ const enqueueReportsProcessing = (files) => {
             morganStanleyNew: { },
             degiro: { },
             coi: null,
+            crypto: null,
             excel: { }
         },
         files: fileInfos
@@ -117,6 +120,20 @@ const enqueueReportsProcessing = (files) => {
                 report.output.coi = null;
             });
 
+    const processCryptoFifoReports = fileBuffers =>
+        Promise.resolve()
+            .then(() => report.status.crypto = 'parsing')
+            .then(() => parseCryptoFifoFromMemory(fileBuffers))
+            .then(json => {
+                report.status.crypto = 'done';
+                report.output.crypto = json;
+            })
+            .catch(e => {
+                console.log('Crypto FIFO parser error:', e);
+                report.status.crypto = 'failed';
+                report.output.crypto = null;
+            });
+
     const prepareData = () =>
         Promise.resolve()
             .then(() => {
@@ -153,7 +170,8 @@ const enqueueReportsProcessing = (files) => {
                         ...degiroInput.dividends
                     ].sort(sortByDate),
                     esppStocks: fidelityInput.esppStocks.sort(sortByDate),
-                    coi: coiInput.coi
+                    coi: coiInput.coi,
+                    crypto: report.output.crypto,
                 };
 
                 report.output.excelRaw = excelGeneratorInput;
@@ -173,7 +191,8 @@ const enqueueReportsProcessing = (files) => {
         processMorganStanleyReports(fileBuffers),
         processMorganStanleyNewReports(fileBuffers),
         processDegiroReports(fileBuffers),
-        processCoiReport(fileBuffers)
+        processCoiReport(fileBuffers),
+        processCryptoFifoReports(fileBuffers),
     ])
     .then(() => prepareData())
     .then(() => {
@@ -225,6 +244,7 @@ app.get('/status/:token/json', (req, res) => {
                 morganStanleyNew: report.output.morganStanleyNew,
                 degiro: report.output.degiro,
                 coi: report.output.coi,
+                crypto: report.output.crypto,
                 excelRaw: report.output.excelRaw
             }
         })

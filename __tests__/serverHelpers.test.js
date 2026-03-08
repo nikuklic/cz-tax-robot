@@ -85,6 +85,105 @@ describe('serverHelpers', () => {
             expect(getFoundYears(excelRaw)).toEqual(['2025']);
         });
 
+        it('should include year from crypto transactions', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '02-20-2024' },
+                    ],
+                },
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
+        it('should include multiple years from crypto transactions', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '02-20-2024' },
+                        { dateSold: '05-15-2024', dateAcquired: '01-01-2022' },
+                    ],
+                },
+            };
+            const years = getFoundYears(excelRaw);
+            expect(years).toContain('2024');
+            expect(years).toContain('2025');
+        });
+
+        it('should not duplicate crypto year if already present in stocks', () => {
+            const excelRaw = {
+                stocks: [{ date: '03-15-2025' }],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '02-20-2024' },
+                    ],
+                },
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
+        it('should handle null crypto gracefully', () => {
+            const excelRaw = {
+                stocks: [{ date: '03-15-2025' }],
+                dividends: [],
+                esppStocks: [],
+                crypto: null,
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
+        it('should handle crypto with empty transactions array', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: { transactions: [] },
+            };
+            expect(getFoundYears(excelRaw)).toEqual([]);
+        });
+
+        it('should include year from income transactions date', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [
+                        { date: '02-16-2025', asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
+                    ],
+                },
+            };
+            expect(getFoundYears(excelRaw)).toEqual(['2025']);
+        });
+
+        it('should include income transaction year alongside capital gains year', () => {
+            const excelRaw = {
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2024', dateAcquired: '01-01-2022', asset: 'ETH' },
+                    ],
+                    incomeTransactions: [
+                        { date: '02-16-2025', asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
+                    ],
+                },
+            };
+            const years = getFoundYears(excelRaw);
+            expect(years).toContain('2024');
+            expect(years).toContain('2025');
+        });
+
         it('should return sorted unique years across all entry types', () => {
             const excelRaw = {
                 stocks: [
@@ -272,6 +371,140 @@ describe('serverHelpers', () => {
             };
             const result = filterByYears(excelRaw, ['2025']);
             expect(result.coi).toBeNull();
+        });
+
+        it('should keep crypto transactions matching selected year', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '02-20-2024', asset: 'ETH' },
+                        { dateSold: '05-15-2024', dateAcquired: '01-01-2022', asset: 'BTC' },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto.transactions).toHaveLength(1);
+            expect(result.crypto.transactions[0].asset).toBe('ETH');
+        });
+
+        it('should keep crypto transactions for multiple selected years', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '01-01-2023', asset: 'ETH' },
+                        { dateSold: '05-15-2024', dateAcquired: '01-01-2022', asset: 'BTC' },
+                        { dateSold: '03-10-2023', dateAcquired: '01-01-2021', asset: 'ADA' },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2024', '2025']);
+            expect(result.crypto.transactions).toHaveLength(2);
+        });
+
+        it('should return empty transactions when no crypto dates match', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2023', dateAcquired: '01-01-2021', asset: 'ETH' },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto.transactions).toHaveLength(0);
+        });
+
+        it('should pass through null crypto as null', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: null,
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto).toBeNull();
+        });
+
+        it('should preserve crypto object structure after filtering', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '01-01-2023', asset: 'ETH', gain: 100 },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto).not.toBeNull();
+            expect(result.crypto.transactions[0].gain).toBe(100);
+        });
+
+        it('should keep income transactions matching selected year', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [
+                        { date: '02-16-2025', asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
+                        { date: '03-10-2024', asset: 'ETH', amount: 0.05, value: 80, type: 'Staking' },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto.incomeTransactions).toHaveLength(1);
+            expect(result.crypto.incomeTransactions[0].asset).toBe('ADA');
+        });
+
+        it('should exclude income transactions from non-selected years', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [
+                        { date: '01-01-2023', asset: 'BTC', amount: 0.001, value: 20, type: 'Mining' },
+                    ],
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto.incomeTransactions).toHaveLength(0);
+        });
+
+        it('should handle missing incomeTransactions field gracefully', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [
+                        { dateSold: '01-09-2025', dateAcquired: '01-01-2023', asset: 'ETH', gain: 100 },
+                    ],
+                    // incomeTransactions intentionally absent
+                },
+            };
+            const result = filterByYears(excelRaw, ['2025']);
+            expect(result.crypto.incomeTransactions).toEqual([]);
         });
     });
 });

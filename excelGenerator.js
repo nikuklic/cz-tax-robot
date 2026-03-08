@@ -259,6 +259,14 @@ const generate = (input) => {
     const instructions_ws = wb.addWorksheet(EN.taxInstructionsSheet, INSTRUCTIONS_WORKSHEET_OPTIONS);
     populateTaxInstructionsSheet(instructions_ws, input, EN, enSummaryRefs);
 
+    if (input.crypto && (
+        (input.crypto.transactions && input.crypto.transactions.length > 0) ||
+        (input.crypto.incomeTransactions && input.crypto.incomeTransactions.length > 0)
+    )) {
+        const crypto_ws = wb.addWorksheet('Crypto Gains', WORKSHEET_OPTIONS);
+        populateCryptoCapitalGainsSheet(crypto_ws, input);
+    }
+
     return wb;
 }
 
@@ -867,6 +875,210 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
     ws.cell(row, 3).string('Use in Attachment 3 (Row 323) or Attachment 4 (Row 412)');
     ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(GREEN_PLAIN_NUMBER);
     row += 1;
+};
+
+/**
+ * Populate the "Crypto Capital Gains" worksheet.
+ * @param {xl.Worksheet} ws
+ * @param {object} input  Full excelGenerator input (input.crypto, input.inputs)
+ */
+/**
+ * Parse a MM-DD-YYYY date string into a JS Date (time = midnight).
+ */
+const parseMDY = str => {
+    const [m, d, y] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+};
+
+const populateCryptoCapitalGainsSheet = (ws, input) => {
+    const txs = input.crypto.transactions;
+    const exchangeRatesForYears = (input.inputs && input.inputs.exchangeRatesForYears) || {};
+
+    // Column indices
+    const COL_DATE_SOLD      = 1;
+    const COL_DATE_ACQUIRED  = 2;
+    const COL_ASSET          = 3;
+    const COL_AMOUNT         = 4;
+    const COL_COST           = 5;
+    const COL_PROCEEDS       = 6;
+    const COL_GAIN           = 7;
+    const COL_HOLDING        = 8;
+    const COL_WITHIN_3Y      = 9;
+
+    let row = 1;
+
+    // Row 1: Title
+    ws.cell(row, 1).string('Crypto Capital Gains (Koinly FIFO)').style(TITLE);
+    row += 1;
+
+    // Row 2: EUR-CZK Exchange Rate (use first available year's rate, or 0)
+    const firstYear = Object.keys(exchangeRatesForYears).sort()[0];
+    const eurCzkRate = firstYear ? (exchangeRatesForYears[firstYear].eurCzk || 0) : 0;
+    ws.cell(row, 1).string('EUR-CZK Exchange Rate');
+    const eurCzkRateRow = row;
+    const eurCzkRateCol = 2;
+    if (eurCzkRate === 0) {
+        ws.cell(row, eurCzkRateCol).number(0).style({ ...CZK, ...WARNING });
+    } else {
+        ws.cell(row, eurCzkRateCol).number(eurCzkRate).style(CZK);
+    }
+    const eurCzkRateCell = xl.getExcelCellRef(eurCzkRateRow, eurCzkRateCol);
+    row += 2; // Skip row 3 (blank gap)
+
+    // Row 4: Column headers
+    ws.cell(row, COL_DATE_SOLD).string('Date Sold').style(HEADER);
+    ws.cell(row, COL_DATE_ACQUIRED).string('Date Acquired').style(HEADER);
+    ws.cell(row, COL_ASSET).string('Asset').style(HEADER);
+    ws.cell(row, COL_AMOUNT).string('Amount').style(HEADER);
+    ws.cell(row, COL_COST).string('Cost (EUR)').style(HEADER);
+    ws.cell(row, COL_PROCEEDS).string('Proceeds (EUR)').style(HEADER);
+    ws.cell(row, COL_GAIN).string('Gain/Loss (EUR)').style(HEADER);
+    ws.cell(row, COL_HOLDING).string('Holding Period').style(HEADER);
+    ws.cell(row, COL_WITHIN_3Y).string('Sold within 3 years').style(HEADER);
+    row += 1;
+
+    // Rows 5..N: Transaction data
+    const dataStartRow = row;
+    const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+    txs.forEach((tx, i) => {
+        const r = row + i;
+        ws.cell(r, COL_DATE_SOLD).string(tx.dateSold);
+        ws.cell(r, COL_DATE_ACQUIRED).string(tx.dateAcquired);
+        ws.cell(r, COL_ASSET).string(tx.asset);
+        ws.cell(r, COL_AMOUNT).number(tx.amount).style(PLAIN_NUMBER);
+        ws.cell(r, COL_COST).number(tx.cost).style(EUR);
+        ws.cell(r, COL_PROCEEDS).number(tx.proceeds).style(EUR);
+        ws.cell(r, COL_GAIN).number(tx.gain).style(EUR);
+        ws.cell(r, COL_HOLDING).string(tx.holdingPeriod);
+
+        const soldDate     = parseMDY(tx.dateSold);
+        const acquiredDate = parseMDY(tx.dateAcquired);
+        const holdingYears = (soldDate - acquiredDate) / MS_PER_YEAR;
+        ws.cell(r, COL_WITHIN_3Y).string(holdingYears < 3 ? 'Yes' : 'No');
+    });
+
+    const dataEndRow = row + txs.length - 1;
+    row += txs.length;
+
+    // Row N+2: Totals row (all transactions, for reference)
+    row += 1; // blank gap
+    const totalRow = row;
+    ws.cell(totalRow, 1).string('Total (all)').style(YELLOW_TITLE);
+    for (let c = 2; c <= COL_WITHIN_3Y; c++) ws.cell(totalRow, c).style(YELLOW);
+
+    const costBegin    = xl.getExcelCellRef(dataStartRow, COL_COST);
+    const costEnd      = xl.getExcelCellRef(dataEndRow, COL_COST);
+    const procBegin    = xl.getExcelCellRef(dataStartRow, COL_PROCEEDS);
+    const procEnd      = xl.getExcelCellRef(dataEndRow, COL_PROCEEDS);
+    const gainBegin    = xl.getExcelCellRef(dataStartRow, COL_GAIN);
+    const gainEnd      = xl.getExcelCellRef(dataEndRow, COL_GAIN);
+    const within3yBegin = xl.getExcelCellRef(dataStartRow, COL_WITHIN_3Y);
+    const within3yEnd   = xl.getExcelCellRef(dataEndRow, COL_WITHIN_3Y);
+
+    ws.cell(totalRow, COL_COST).formula(`SUM(${costBegin}:${costEnd})`).style({ ...YELLOW, ...EUR });
+    ws.cell(totalRow, COL_PROCEEDS).formula(`SUM(${procBegin}:${procEnd})`).style({ ...YELLOW, ...EUR });
+    ws.cell(totalRow, COL_GAIN).formula(`SUM(${gainBegin}:${gainEnd})`).style({ ...YELLOW, ...EUR });
+
+    // Row N+4: Capital Gains Summary section (filtered to "Sold within 3 years = Yes")
+    row += 2; // blank gap after totals
+    const summaryTitleRow = row;
+    ws.cell(summaryTitleRow, 1).string('Capital Gains Summary (sold within 3 years)').style(BLUE_TITLE);
+    ws.cell(summaryTitleRow, 2).style(BLUE);
+    row += 1;
+
+    const holdingBegin = xl.getExcelCellRef(dataStartRow, COL_HOLDING);
+    const holdingEnd   = xl.getExcelCellRef(dataEndRow, COL_HOLDING);
+
+    const summaryRows = [
+        {
+            label:   'Total Proceeds (EUR)',
+            formula: `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${procBegin}:${procEnd})`,
+            style:   { ...BLUE, ...EUR },
+        },
+        {
+            label:   'Total Acquisition Cost (EUR)',
+            formula: `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${costBegin}:${costEnd})`,
+            style:   { ...BLUE, ...EUR },
+        },
+        {
+            label:   'Net Capital Gain (EUR)',
+            formula: `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${gainBegin}:${gainEnd})`,
+            style:   { ...BLUE, ...EUR },
+        },
+        {
+            label:   'Short-term Gain (EUR)',
+            formula: `SUMPRODUCT((${within3yBegin}:${within3yEnd}="Yes")*(${holdingBegin}:${holdingEnd}="Short-term")*(${gainBegin}:${gainEnd}))`,
+            style:   { ...BLUE, ...EUR },
+        },
+        {
+            label:   'Long-term Gain (EUR)',
+            formula: `SUMPRODUCT((${within3yBegin}:${within3yEnd}="Yes")*(${holdingBegin}:${holdingEnd}="Long-term")*(${gainBegin}:${gainEnd}))`,
+            style:   { ...BLUE, ...EUR },
+        },
+        {
+            label:   'Net Capital Gain (CZK)',
+            formula: `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${gainBegin}:${gainEnd})*${eurCzkRateCell}`,
+            style:   { ...BLUE, ...CZK },
+        },
+    ];
+
+    summaryRows.forEach(({ label, formula, style }) => {
+        ws.cell(row, 1).string(label).style(BLUE_TITLE);
+        ws.cell(row, 2).formula(formula).style(style);
+        row += 1;
+    });
+
+    // Income Transactions section
+    const incomeTxs = (input.crypto && input.crypto.incomeTransactions) || [];
+    if (incomeTxs.length > 0) {
+        row += 2; // blank gap
+
+        ws.cell(row, 1).string('Income Transactions').style(BLUE_TITLE);
+        row += 1;
+
+        const INC_COL_DATE   = 1;
+        const INC_COL_ASSET  = 2;
+        const INC_COL_AMOUNT = 3;
+        const INC_COL_VALUE  = 4;
+        const INC_COL_TYPE   = 5;
+
+        ws.cell(row, INC_COL_DATE).string('Date').style(HEADER);
+        ws.cell(row, INC_COL_ASSET).string('Asset').style(HEADER);
+        ws.cell(row, INC_COL_AMOUNT).string('Amount').style(HEADER);
+        ws.cell(row, INC_COL_VALUE).string('Value (EUR)').style(HEADER);
+        ws.cell(row, INC_COL_TYPE).string('Type').style(HEADER);
+        row += 1;
+
+        const incDataStartRow = row;
+        incomeTxs.forEach((tx, i) => {
+            const r = row + i;
+            ws.cell(r, INC_COL_DATE).string(tx.date);
+            ws.cell(r, INC_COL_ASSET).string(tx.asset);
+            ws.cell(r, INC_COL_AMOUNT).number(tx.amount).style(PLAIN_NUMBER);
+            ws.cell(r, INC_COL_VALUE).number(tx.value).style(EUR);
+            ws.cell(r, INC_COL_TYPE).string(tx.type);
+        });
+
+        const incDataEndRow = row + incomeTxs.length - 1;
+        row += incomeTxs.length;
+
+        // Totals row
+        const incValueBegin = xl.getExcelCellRef(incDataStartRow, INC_COL_VALUE);
+        const incValueEnd   = xl.getExcelCellRef(incDataEndRow,   INC_COL_VALUE);
+        ws.cell(row, 1).string('Total').style(YELLOW_TITLE);
+        for (let c = 2; c <= INC_COL_TYPE; c++) ws.cell(row, c).style(YELLOW);
+        ws.cell(row, INC_COL_VALUE).formula(`SUM(${incValueBegin}:${incValueEnd})`).style({ ...YELLOW, ...EUR });
+        const incTotalValueCell = xl.getExcelCellRef(row, INC_COL_VALUE);
+        row += 2; // gap before summary
+
+        // Income summary
+        ws.cell(row, 1).string('Total Income (EUR)').style(BLUE_TITLE);
+        ws.cell(row, 2).formula(`${incTotalValueCell}`).style({ ...BLUE, ...EUR });
+        row += 1;
+
+        ws.cell(row, 1).string('Total Income (CZK)').style(BLUE_TITLE);
+        ws.cell(row, 2).formula(`${incTotalValueCell}*${eurCzkRateCell}`).style({ ...BLUE, ...CZK });
+    }
 };
 
 module.exports = {
