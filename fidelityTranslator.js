@@ -78,6 +78,7 @@ const translateFidelityReports = entries => {
                 amount: i.quantity,
                 pricePerUnit: i.price,
                 price: i.amount,
+                gainFromPurchase: i.gainFromPurchase,
                 source: 'Fidelity',
             }))
         ], []);

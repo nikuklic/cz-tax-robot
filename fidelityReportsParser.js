@@ -99,12 +99,14 @@ const extractMeaningfulInformation = fidelityReportLines => {
         
         const price = tofloat(nextString(2).replace('$', ''));
         const quantity = nextFloat(4);
+        const gainFromPurchase = nextFloat(5);
 
-        reportSummary.espp.list = [{ 
-            date: nextString(1).trim(),            
+        reportSummary.espp.list = [{
+            date: nextString(1).trim(),
             amount: quantity * price,
             quantity,
-            price
+            price,
+            gainFromPurchase
         }];
     }
     
