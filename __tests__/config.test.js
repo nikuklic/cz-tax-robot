@@ -41,9 +41,7 @@ describe('config.json', () => {
         expect(hasKnownYear).toBe(true);
     });
 
-    it('should have a numeric ESPP discount', () => {
-        expect(typeof config.esppDiscount).toBe('number');
-        expect(config.esppDiscount).toBeGreaterThan(0);
-        expect(config.esppDiscount).toBeLessThanOrEqual(100);
+    it('should not have esppDiscount (gain is now extracted from Fidelity PDF)', () => {
+        expect(config.esppDiscount).toBeUndefined();
     });
 });

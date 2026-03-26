@@ -34,6 +34,7 @@ describe('fidelityTranslator', () => {
                 amount: 1,
                 pricePerUnit: 3000,
                 price: 3000,
+                gainFromPurchase: 0,
                 source: 'Fidelity',
             });
         });
@@ -146,7 +147,7 @@ describe('fidelityTranslator', () => {
                 espp: {
                     bought: 500,
                     list: [
-                        { date: '1/12/2025', quantity: 11.18, price: 12.35, amount: 138.07 },
+                        { date: '1/12/2025', quantity: 11.18, price: 12.35, amount: 138.07, gainFromPurchase: 15.23 },
                     ]
                 },
             }];
@@ -159,6 +160,7 @@ describe('fidelityTranslator', () => {
                 amount: 11.18,
                 pricePerUnit: 12.35,
                 price: 138.07,
+                gainFromPurchase: 15.23,
                 source: 'Fidelity',
             });
         });

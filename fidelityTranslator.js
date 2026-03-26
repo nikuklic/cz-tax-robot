@@ -44,6 +44,7 @@ const translateFidelityReports = entries => {
                 amount: 1,
                 pricePerUnit: yearlyReport.espp.bought,
                 price: yearlyReport.espp.bought,
+                gainFromPurchase: 0, // not available in yearly reports
                 source: 'Fidelity',
             }]
         };

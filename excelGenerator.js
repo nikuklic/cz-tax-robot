@@ -113,7 +113,8 @@ const EN = {
     sheetCustomExchangeRate: 'English daily USD-CZK',
     inputs: 'Inputs',
     exchangeRate: 'Exchange Rate',
-    esppDiscount: 'ESPP Discount',
+    gainUSD: 'Gain (USD)',
+    gainCZK: 'Gain (CZK)',
     stocksReceived: 'Stocks received',
     date: 'Date',
     amount: 'Amount',
@@ -129,7 +130,6 @@ const EN = {
     taxUSD: 'Tax withheld',
     taxCZK: 'Tax withheld (CZK)',
     esppStocks: 'ESPP Stocks',
-    discount: 'Discounted',
     overallStocksCZK: 'Overall stocks acquired (CZK)',
     overallDividendsCZK: 'Overall dividends acquired (CZK)',
     overallTaxCZK: 'Dividend tax withheld (CZK)',
@@ -197,7 +197,8 @@ const CZ = {
     sheetCustomExchangeRate: 'Česky denní USD-CZK',
     inputs: 'Vstupy',
     exchangeRate: 'Kurz',
-    esppDiscount: 'Sleva pro ESPP',
+    gainUSD: 'Sleva z nákupu (USD)',
+    gainCZK: 'Sleva z nákupu (CZK)',
     stocksReceived: 'Nabytí akcií',
     date: 'Datum',
     amount: 'Počet',
@@ -213,7 +214,6 @@ const CZ = {
     taxUSD: 'Srážková daň',
     taxCZK: 'Srážková daň (CZK)',
     esppStocks: 'Nabytí akcií ESPP',
-    discount: 'Sleva',
     overallStocksCZK: 'Nabyté akcie celkem (CZK)',
     overallDividendsCZK: 'Dividendy z držení akcií celkem (CZK)',
     overallTaxCZK: 'Srážková daň z dividendů (CZK)',
@@ -447,8 +447,8 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + 1, 3).string(locale.priceUSD).style(HEADER);
         ws.cell(rowCursor + 1, 4).string(locale.amount).style(HEADER);
         ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
-        ws.cell(rowCursor + 1, 6).string(locale.gainUSD || 'Gain (USD)').style(HEADER);
-        ws.cell(rowCursor + 1, 7).string(locale.gainCZK || 'Gain (CZK)').style(HEADER);
+        ws.cell(rowCursor + 1, 6).string(locale.gainUSD).style(HEADER);
+        ws.cell(rowCursor + 1, 7).string(locale.gainCZK).style(HEADER);
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort(compareDates).forEach((s, i) => {
@@ -468,7 +468,7 @@ const populateWorksheet = (ws, input, locale) => {
 
             // Gain from Purchase (directly from Fidelity statement)
             const gain = s.gainFromPurchase || 0;
-            ws.cell(rowCursor + i, 6).number(gain).style(USD);
+            ws.cell(rowCursor + i, 6).number(gain).style(style);
             if (isSourceCZK(s.source)) {
                 ws.cell(rowCursor + i, 7).number(gain).style(CZK);
             } else {

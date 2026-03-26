@@ -15,7 +15,6 @@ describe('excelGenerator', () => {
                 [knownYear]: { usdCzk: knownRates.usdCzk, eurCzk: knownRates.eurCzk }
             },
             getExchangeRateForDay: () => 22.0,
-            esppDiscount: config.esppDiscount,
             ...overrides.inputs,
         },
         stocks: overrides.stocks || [
@@ -25,7 +24,7 @@ describe('excelGenerator', () => {
             { date: `06-15-${knownYear}`, amount: 85, tax: 12.75, source: 'Fidelity' },
         ],
         esppStocks: overrides.esppStocks || [
-            { date: `01-12-${knownYear}`, amount: 11, pricePerUnit: 12, price: 132, source: 'Fidelity' },
+            { date: `01-12-${knownYear}`, amount: 11, pricePerUnit: 12, price: 132, gainFromPurchase: 14.67, source: 'Fidelity' },
         ],
     });
 
@@ -351,7 +350,6 @@ describe('excelGenerator', () => {
                 inputs: {
                     exchangeRatesForYears: {},
                     getExchangeRateForDay: () => 22.0,
-                    esppDiscount: config.esppDiscount,
                 },
                 stocks: [],
                 dividends: [],
