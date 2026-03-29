@@ -147,6 +147,15 @@ const EN = {
     coiTaxAdvanceFromBackpay: 'Tax Advance from Backpay (ř.7)',
     coiTaxBonuses: 'Monthly Tax Bonuses (ř.9)',
     coiEmployerContributions: 'Employer Contributions (ř.10)',
+    cryptoIncomeSection: 'Cryptocurrencies income',
+    cryptoIncomeEUR: 'Crypto income (EUR)',
+    cryptoIncomeCZK: 'Crypto income (CZK)',
+    cryptoCapGainSection: 'Net capital gain from sale of crypto',
+    cryptoCapGainEUR: 'Net capital gain from sale of crypto (EUR)',
+    cryptoCapGainCZK: 'Net capital gain from sale of crypto (CZK)',
+    cryptoTotalSection: 'Total income from crypto',
+    cryptoTotalEUR: 'Total income from crypto (EUR)',
+    cryptoTotalCZK: 'Total income from crypto (CZK)',
     taxInstructionsSheet: 'Tax Instructions',
     taxInstructionsTitle: 'Tax Return Filing Instructions',
     taxInstructionsSubtitle: 'How to use computed values in the Czech Personal Income Tax Return (DAP)',
@@ -231,6 +240,15 @@ const CZ = {
     coiTaxAdvanceFromBackpay: 'Záloha z doplatků (ř.7)',
     coiTaxBonuses: 'Daňové bonusy (ř.9)',
     coiEmployerContributions: 'Příspěvky zaměstnavatele (ř.10)',
+    cryptoIncomeSection: 'Příjmy z kryptoměn',
+    cryptoIncomeEUR: 'Příjem z kryptoměn (EUR)',
+    cryptoIncomeCZK: 'Příjem z kryptoměn (CZK)',
+    cryptoCapGainSection: 'Čistý kapitálový zisk z prodeje kryptoměn',
+    cryptoCapGainEUR: 'Čistý kapitálový zisk z prodeje kryptoměn (EUR)',
+    cryptoCapGainCZK: 'Čistý kapitálový zisk z prodeje kryptoměn (CZK)',
+    cryptoTotalSection: 'Celkový příjem z kryptoměn',
+    cryptoTotalEUR: 'Celkový příjem z kryptoměn (EUR)',
+    cryptoTotalCZK: 'Celkový příjem z kryptoměn (CZK)',
 };
 
 /**
@@ -242,7 +260,7 @@ const generate = (input) => {
 
     const en_ws = wb.addWorksheet(EN.sheet, WORKSHEET_OPTIONS);
     input.inputs.exchangeRateKind = 'fixed';
-    const enSummaryRefs = populateWorksheet(en_ws, input, EN);
+    const { summaryRefs: enSummaryRefs, yearExchangeRateRows: enYearExchangeRateRows } = populateWorksheet(en_ws, input, EN);
 
     // const en_custom_ws = wb.addWorksheet(EN.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
     // input.inputs.exchangeRateKind = 'variable';
@@ -264,7 +282,7 @@ const generate = (input) => {
         (input.crypto.incomeTransactions && input.crypto.incomeTransactions.length > 0)
     )) {
         const crypto_ws = wb.addWorksheet('Crypto Gains', WORKSHEET_OPTIONS);
-        populateCryptoCapitalGainsSheet(crypto_ws, input);
+        populateCryptoCapitalGainsSheet(crypto_ws, input, enYearExchangeRateRows);
     }
 
     return wb;
@@ -511,10 +529,112 @@ const populateWorksheet = (ws, input, locale) => {
         coiTaxBonuses: null,
         coiEmployerContributions: null,
     };
+    rowCursor += 2; // advance to last summary row (overallTaxCZK)
+
+    // Cryptocurrencies income section (only if income transactions exist)
+    const cryptoIncomeTxs = (input.crypto && input.crypto.incomeTransactions) || [];
+    if (cryptoIncomeTxs.length > 0) {
+        rowCursor += 1 + SKIP_ROW;
+
+        const totalEur = cryptoIncomeTxs.reduce((sum, tx) => sum + tx.value, 0);
+
+        const firstTxYear = getYearFromDate(cryptoIncomeTxs[0].date);
+        const txYearRows = yearExchangeRateRows[firstTxYear]
+            || yearExchangeRateRows['_default']
+            || yearExchangeRateRows[years[0]]
+            || yearExchangeRateRows[Object.keys(yearExchangeRateRows)[0]];
+        const eurRow = txYearRows && txYearRows.eurRow;
+
+        const sectionStartRow = rowCursor;
+
+        // Crypto income section (cols 1–3)
+        ws.cell(sectionStartRow, 1).string(locale.cryptoIncomeSection).style(BLUE_TITLE);
+        ws.cell(sectionStartRow, 2).style(BLUE);
+        ws.cell(sectionStartRow, 3).style(BLUE);
+
+        ws.cell(sectionStartRow + 1, 1).string(locale.date).style(HEADER);
+        ws.cell(sectionStartRow + 1, 2).string(locale.cryptoIncomeEUR).style(HEADER);
+        ws.cell(sectionStartRow + 1, 3).string(locale.cryptoIncomeCZK).style(HEADER);
+
+        ws.cell(sectionStartRow + 2, 1).string(`12-31-${firstTxYear}`);
+        ws.cell(sectionStartRow + 2, 2).number(totalEur).style({ ...BLUE, ...EUR });
+        const totalEurCell = xl.getExcelCellRef(sectionStartRow + 2, 2);
+        if (eurRow) {
+            const eurCzkRef = xl.getExcelCellRef(eurRow, 2);
+            ws.cell(sectionStartRow + 2, 3).formula(`${totalEurCell}*${eurCzkRef}`).style({ ...BLUE, ...CZK });
+        } else {
+            ws.cell(sectionStartRow + 2, 3).number(0).style({ ...BLUE, ...CZK, ...WARNING });
+        }
+
+        // Net capital gain section (cols 1–3, below income section) — only if gain is positive
+        const cryptoTxs = (input.crypto && input.crypto.transactions) || [];
+        let capGainDataEurCell = null;
+        let capGainDataCzkCell = null;
+        let lastCryptoSectionEndRow = sectionStartRow + 2;
+
+        if (cryptoTxs.length > 0) {
+            const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+            const netCapGainEur = cryptoTxs
+                .filter(tx => (parseMDY(tx.dateSold) - parseMDY(tx.dateAcquired)) / MS_PER_YEAR < 3)
+                .reduce((sum, tx) => sum + tx.gain, 0);
+            if (netCapGainEur > 0) {
+                const capGainStartRow = sectionStartRow + 4;
+
+                const capGainYear = cryptoTxs[0].dateSold.split('-')[2];
+                const capGainYearRows = yearExchangeRateRows[capGainYear]
+                    || yearExchangeRateRows['_default']
+                    || yearExchangeRateRows[years[0]]
+                    || yearExchangeRateRows[Object.keys(yearExchangeRateRows)[0]];
+                const capGainEurRow = capGainYearRows && capGainYearRows.eurRow;
+
+                ws.cell(capGainStartRow, 1).string(locale.cryptoCapGainSection).style(BLUE_TITLE);
+                ws.cell(capGainStartRow, 2).style(BLUE);
+                ws.cell(capGainStartRow, 3).style(BLUE);
+
+                ws.cell(capGainStartRow + 1, 1).string(locale.date).style(HEADER);
+                ws.cell(capGainStartRow + 1, 2).string(locale.cryptoCapGainEUR).style(HEADER);
+                ws.cell(capGainStartRow + 1, 3).string(locale.cryptoCapGainCZK).style(HEADER);
+
+                ws.cell(capGainStartRow + 2, 1).string(`12-31-${capGainYear}`);
+                ws.cell(capGainStartRow + 2, 2).number(netCapGainEur).style({ ...BLUE, ...EUR });
+                capGainDataEurCell = xl.getExcelCellRef(capGainStartRow + 2, 2);
+                if (capGainEurRow) {
+                    const capGainEurCzkRef = xl.getExcelCellRef(capGainEurRow, 2);
+                    ws.cell(capGainStartRow + 2, 3).formula(`${capGainDataEurCell}*${capGainEurCzkRef}`).style({ ...BLUE, ...CZK });
+                } else {
+                    ws.cell(capGainStartRow + 2, 3).number(0).style({ ...BLUE, ...CZK, ...WARNING });
+                }
+                capGainDataCzkCell = xl.getExcelCellRef(capGainStartRow + 2, 3);
+                lastCryptoSectionEndRow = capGainStartRow + 2;
+            }
+        }
+
+        // Total income from crypto
+        const incomeCzkCell = xl.getExcelCellRef(sectionStartRow + 2, 3);
+        const totalStartRow = lastCryptoSectionEndRow + 2;
+
+        ws.cell(totalStartRow, 1).string(locale.cryptoTotalSection).style(BLUE_TITLE);
+        ws.cell(totalStartRow, 2).style(BLUE);
+        ws.cell(totalStartRow, 3).style(BLUE);
+
+        ws.cell(totalStartRow + 1, 1).string(locale.date).style(HEADER);
+        ws.cell(totalStartRow + 1, 2).string(locale.cryptoTotalEUR).style(HEADER);
+        ws.cell(totalStartRow + 1, 3).string(locale.cryptoTotalCZK).style(HEADER);
+
+        ws.cell(totalStartRow + 2, 1).string(`12-31-${firstTxYear}`);
+        ws.cell(totalStartRow + 2, 2).formula(
+            capGainDataEurCell ? `${totalEurCell}+${capGainDataEurCell}` : `${totalEurCell}`
+        ).style({ ...BLUE, ...EUR });
+        ws.cell(totalStartRow + 2, 3).formula(
+            capGainDataCzkCell ? `${incomeCzkCell}+${capGainDataCzkCell}` : `${incomeCzkCell}`
+        ).style({ ...BLUE, ...CZK });
+
+        rowCursor = totalStartRow + 2; // advance past the last crypto row
+    }
 
     // COI Section (if COI data is available)
     if (input.coi) {
-        rowCursor += 3 + SKIP_ROW;
+        rowCursor += 1 + SKIP_ROW;
         ws.cell(rowCursor, 1).string(locale.coiSection).style(BLUE_TITLE);
         ws.cell(rowCursor, 2).style(BLUE);
         ws.cell(rowCursor, 3).style(BLUE);
@@ -573,7 +693,7 @@ const populateWorksheet = (ws, input, locale) => {
         summaryRefs.coiEmployerContributions = xl.getExcelCellRef(rowCursor, 2);
     }
 
-    return summaryRefs;
+    return { summaryRefs, yearExchangeRateRows };
 }
 
 const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs) => {
@@ -890,9 +1010,19 @@ const parseMDY = str => {
     return new Date(y, m - 1, d);
 };
 
-const populateCryptoCapitalGainsSheet = (ws, input) => {
+const populateCryptoCapitalGainsSheet = (ws, input, enYearExchangeRateRows) => {
     const txs = input.crypto.transactions;
-    const exchangeRatesForYears = (input.inputs && input.inputs.exchangeRatesForYears) || {};
+
+    // Helper: cross-sheet EUR-CZK rate reference for a given year
+    const getEurCzkRef = (year) => {
+        const yearRows = (enYearExchangeRateRows && (
+            enYearExchangeRateRows[year]
+            || enYearExchangeRateRows['_default']
+            || enYearExchangeRateRows[Object.keys(enYearExchangeRateRows)[0]]
+        ));
+        if (!yearRows || !yearRows.eurRow) return null;
+        return `'${EN.sheet}'!${xl.getExcelCellRef(yearRows.eurRow, 2)}`;
+    };
 
     // Column indices
     const COL_DATE_SOLD      = 1;
@@ -902,30 +1032,15 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
     const COL_COST           = 5;
     const COL_PROCEEDS       = 6;
     const COL_GAIN           = 7;
-    const COL_HOLDING        = 8;
-    const COL_WITHIN_3Y      = 9;
+    const COL_WITHIN_3Y      = 8;
 
     let row = 1;
 
     // Row 1: Title
     ws.cell(row, 1).string('Crypto Capital Gains (Koinly FIFO)').style(TITLE);
-    row += 1;
+    row += 2; // blank gap before headers
 
-    // Row 2: EUR-CZK Exchange Rate (use first available year's rate, or 0)
-    const firstYear = Object.keys(exchangeRatesForYears).sort()[0];
-    const eurCzkRate = firstYear ? (exchangeRatesForYears[firstYear].eurCzk || 0) : 0;
-    ws.cell(row, 1).string('EUR-CZK Exchange Rate');
-    const eurCzkRateRow = row;
-    const eurCzkRateCol = 2;
-    if (eurCzkRate === 0) {
-        ws.cell(row, eurCzkRateCol).number(0).style({ ...CZK, ...WARNING });
-    } else {
-        ws.cell(row, eurCzkRateCol).number(eurCzkRate).style(CZK);
-    }
-    const eurCzkRateCell = xl.getExcelCellRef(eurCzkRateRow, eurCzkRateCol);
-    row += 2; // Skip row 3 (blank gap)
-
-    // Row 4: Column headers
+    // Column headers
     ws.cell(row, COL_DATE_SOLD).string('Date Sold').style(HEADER);
     ws.cell(row, COL_DATE_ACQUIRED).string('Date Acquired').style(HEADER);
     ws.cell(row, COL_ASSET).string('Asset').style(HEADER);
@@ -933,7 +1048,6 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
     ws.cell(row, COL_COST).string('Cost (EUR)').style(HEADER);
     ws.cell(row, COL_PROCEEDS).string('Proceeds (EUR)').style(HEADER);
     ws.cell(row, COL_GAIN).string('Gain/Loss (EUR)').style(HEADER);
-    ws.cell(row, COL_HOLDING).string('Holding Period').style(HEADER);
     ws.cell(row, COL_WITHIN_3Y).string('Sold within 3 years').style(HEADER);
     row += 1;
 
@@ -949,7 +1063,6 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
         ws.cell(r, COL_COST).number(tx.cost).style(EUR);
         ws.cell(r, COL_PROCEEDS).number(tx.proceeds).style(EUR);
         ws.cell(r, COL_GAIN).number(tx.gain).style(EUR);
-        ws.cell(r, COL_HOLDING).string(tx.holdingPeriod);
 
         const soldDate     = parseMDY(tx.dateSold);
         const acquiredDate = parseMDY(tx.dateAcquired);
@@ -986,9 +1099,6 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
     ws.cell(summaryTitleRow, 2).style(BLUE);
     row += 1;
 
-    const holdingBegin = xl.getExcelCellRef(dataStartRow, COL_HOLDING);
-    const holdingEnd   = xl.getExcelCellRef(dataEndRow, COL_HOLDING);
-
     const summaryRows = [
         {
             label:   'Total Proceeds (EUR)',
@@ -1006,18 +1116,13 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
             style:   { ...BLUE, ...EUR },
         },
         {
-            label:   'Short-term Gain (EUR)',
-            formula: `SUMPRODUCT((${within3yBegin}:${within3yEnd}="Yes")*(${holdingBegin}:${holdingEnd}="Short-term")*(${gainBegin}:${gainEnd}))`,
-            style:   { ...BLUE, ...EUR },
-        },
-        {
-            label:   'Long-term Gain (EUR)',
-            formula: `SUMPRODUCT((${within3yBegin}:${within3yEnd}="Yes")*(${holdingBegin}:${holdingEnd}="Long-term")*(${gainBegin}:${gainEnd}))`,
-            style:   { ...BLUE, ...EUR },
-        },
-        {
             label:   'Net Capital Gain (CZK)',
-            formula: `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${gainBegin}:${gainEnd})*${eurCzkRateCell}`,
+            formula: (() => {
+                const gainsYear = txs.length > 0 ? txs[0].dateSold.split('-')[2] : null;
+                const eurCzkRef = gainsYear ? getEurCzkRef(gainsYear) : null;
+                const base = `SUMIF(${within3yBegin}:${within3yEnd},"Yes",${gainBegin}:${gainEnd})`;
+                return eurCzkRef ? `${base}*${eurCzkRef}` : `${base}*0`;
+            })(),
             style:   { ...BLUE, ...CZK },
         },
     ];
@@ -1077,7 +1182,9 @@ const populateCryptoCapitalGainsSheet = (ws, input) => {
         row += 1;
 
         ws.cell(row, 1).string('Total Income (CZK)').style(BLUE_TITLE);
-        ws.cell(row, 2).formula(`${incTotalValueCell}*${eurCzkRateCell}`).style({ ...BLUE, ...CZK });
+        const incYear = incomeTxs[0].date.split('-')[2];
+        const incEurCzkRef = getEurCzkRef(incYear);
+        ws.cell(row, 2).formula(incEurCzkRef ? `${incTotalValueCell}*${incEurCzkRef}` : `${incTotalValueCell}*0`).style({ ...BLUE, ...CZK });
     }
 };
 

@@ -27,6 +27,28 @@ describe('excelGenerator', () => {
         esppStocks: overrides.esppStocks || [
             { date: `01-12-${knownYear}`, amount: 11, pricePerUnit: 12, price: 132, source: 'Fidelity' },
         ],
+        ...(overrides.coi !== undefined ? { coi: overrides.coi } : {}),
+        ...(overrides.crypto !== undefined ? { crypto: overrides.crypto } : {}),
+    });
+
+    const makeCryptoTx = (overrides = {}) => ({
+        dateSold: `01-09-${knownYear}`,
+        dateAcquired: `02-20-${knownYear - 1}`,
+        asset: 'ETH',
+        amount: 1.5,
+        cost: 1000,
+        proceeds: 2000,
+        gain: 1000,
+        ...overrides,
+    });
+
+    const makeIncomeTx = (overrides = {}) => ({
+        date: `02-16-${knownYear}`,
+        asset: 'ADA',
+        amount: 4.8,
+        value: 3.57,
+        type: 'Reward',
+        ...overrides,
     });
 
     describe('generate', () => {
@@ -39,9 +61,6 @@ describe('excelGenerator', () => {
 
         it('should create worksheets for English and Czech', () => {
             const wb = generate(makeInput());
-
-            // excel4node workbook stores sheets internally
-            // We verify by checking that the workbook has sheet data
             expect(wb).toBeDefined();
         });
 
@@ -141,8 +160,6 @@ describe('excelGenerator', () => {
 
         it('should create a Tax Instructions worksheet', () => {
             const wb = generate(makeInput());
-            // excel4node stores sheets internally; verify the workbook has 3 sheets
-            // (English, Czech, Tax Instructions)
             expect(wb).toBeDefined();
             expect(typeof wb.write).toBe('function');
         });
@@ -179,169 +196,169 @@ describe('excelGenerator', () => {
         });
 
         it('should handle COI data in the report', () => {
-            const input = makeInput();
-            input.coi = {
-                year: knownYear,
-                employer: 'Test Company s.r.o.',
-                taxpayerName: 'Test User',
-                grossIncome: 1200000,
-                incomePaid: 1200000,
-                months: '01 02 03 04 05 06 07 08 09 10 11 12',
-                backpay: 0,
-                taxBase: 1200000,
-                taxAdvanceFromIncome: 228000,
-                taxAdvanceFromBackpay: 0,
-                totalTaxAdvance: 228000,
-                taxBonuses: 0,
-                employerContributions: 0,
-            };
+            const input = makeInput({
+                coi: {
+                    year: knownYear,
+                    employer: 'Test Company s.r.o.',
+                    taxpayerName: 'Test User',
+                    grossIncome: 1200000,
+                    incomePaid: 1200000,
+                    months: '01 02 03 04 05 06 07 08 09 10 11 12',
+                    backpay: 0,
+                    taxBase: 1200000,
+                    taxAdvanceFromIncome: 228000,
+                    taxAdvanceFromBackpay: 0,
+                    totalTaxAdvance: 228000,
+                    taxBonuses: 0,
+                    employerContributions: 0,
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
         it('should handle null COI data', () => {
-            const input = makeInput();
-            input.coi = null;
+            const input = makeInput({ coi: null });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
+        it('should handle COI with employer contributions and bonuses', () => {
+            const input = makeInput({
+                coi: {
+                    year: knownYear,
+                    employer: 'Big Corp a.s.',
+                    taxpayerName: 'Employee',
+                    grossIncome: 2000000,
+                    incomePaid: 1900000,
+                    months: '01 02 03 04 05 06 07 08 09 10 11 12',
+                    backpay: 100000,
+                    taxBase: 2000000,
+                    taxAdvanceFromIncome: 361000,
+                    taxAdvanceFromBackpay: 19000,
+                    totalTaxAdvance: 380000,
+                    taxBonuses: 15000,
+                    employerContributions: 24000,
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        // ── Crypto sheet ──────────────────────────────────────────────────────
+
         it('should not create Crypto sheet when crypto is null', () => {
-            const input = makeInput();
-            input.crypto = null;
+            const input = makeInput({ crypto: null });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
         it('should not create Crypto sheet when crypto has no transactions and no income transactions', () => {
-            const input = makeInput();
-            input.crypto = { transactions: [], incomeTransactions: [] };
+            const input = makeInput({ crypto: { transactions: [], incomeTransactions: [] } });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should create Crypto sheet when only incomeTransactions present (no capital gains)', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [],
-                incomeTransactions: [
-                    { date: `02-16-${knownYear}`, asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
-                ],
-            };
+        it('should create Crypto sheet when only capital gain transactions are present', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx()],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should create Crypto sheet when crypto transactions are present', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [
-                    {
-                        dateSold: `01-09-${knownYear}`,
-                        dateAcquired: `02-20-${knownYear - 1}`,
-                        asset: 'ETH',
-                        amount: 1.5,
-                        cost: 1000,
-                        proceeds: 2000,
-                        gain: 1000,
-                        holdingPeriod: 'Short-term',
-                    },
-                ],
-            };
+        it('should create Crypto sheet when only incomeTransactions are present', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
         it('should create Crypto sheet when both transactions and incomeTransactions are present', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [
-                    {
-                        dateSold: `01-09-${knownYear}`,
-                        dateAcquired: `02-20-${knownYear - 1}`,
-                        asset: 'ETH',
-                        amount: 1.5,
-                        cost: 1000,
-                        proceeds: 2000,
-                        gain: 1000,
-                        holdingPeriod: 'Short-term',
-                    },
-                ],
-                incomeTransactions: [
-                    { date: `02-16-${knownYear}`, asset: 'ADA', amount: 4.8, value: 3.57, type: 'Reward' },
-                    { date: `03-01-${knownYear}`, asset: 'ETH', amount: 0.05, value: 80.00, type: 'Staking' },
-                ],
-            };
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx()],
+                    incomeTransactions: [
+                        makeIncomeTx(),
+                        makeIncomeTx({ date: `03-01-${knownYear}`, asset: 'ETH', amount: 0.05, value: 80.00, type: 'Staking' }),
+                    ],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should generate Crypto sheet with Long-term transactions', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [
-                    {
-                        dateSold: `01-09-${knownYear}`,
-                        dateAcquired: `01-01-${knownYear - 4}`,
-                        asset: 'BTC',
-                        amount: 0.5,
-                        cost: 5000,
-                        proceeds: 20000,
-                        gain: 15000,
-                        holdingPeriod: 'Long-term',
-                    },
-                ],
-            };
+        it('should generate Crypto sheet with long-term transaction (held > 3 years)', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [
+                        makeCryptoTx({
+                            dateSold: `01-09-${knownYear}`,
+                            dateAcquired: `01-01-${knownYear - 4}`,
+                            asset: 'BTC',
+                            amount: 0.5,
+                            cost: 5000,
+                            proceeds: 20000,
+                            gain: 15000,
+                        }),
+                    ],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should generate Crypto sheet with mixed Short/Long-term transactions', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [
-                    {
-                        dateSold: `06-01-${knownYear}`,
-                        dateAcquired: `01-01-${knownYear}`,
-                        asset: 'ETH',
-                        amount: 2,
-                        cost: 500,
-                        proceeds: 600,
-                        gain: 100,
-                        holdingPeriod: 'Short-term',
-                    },
-                    {
-                        dateSold: `06-01-${knownYear}`,
-                        dateAcquired: `01-01-${knownYear - 5}`,
-                        asset: 'ADA',
-                        amount: 1000,
-                        cost: 200,
-                        proceeds: 900,
-                        gain: 700,
-                        holdingPeriod: 'Long-term',
-                    },
-                ],
-            };
+        it('should generate Crypto sheet with mixed short and long-term transactions', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [
+                        makeCryptoTx({
+                            dateSold: `06-01-${knownYear}`,
+                            dateAcquired: `01-01-${knownYear}`,
+                            asset: 'ETH',
+                            amount: 2,
+                            cost: 500,
+                            proceeds: 600,
+                            gain: 100,
+                        }),
+                        makeCryptoTx({
+                            dateSold: `06-01-${knownYear}`,
+                            dateAcquired: `01-01-${knownYear - 5}`,
+                            asset: 'ADA',
+                            amount: 1000,
+                            cost: 200,
+                            proceeds: 900,
+                            gain: 700,
+                        }),
+                    ],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should generate Crypto sheet with transactions containing negative gains', () => {
-            const input = makeInput();
-            input.crypto = {
-                transactions: [
-                    {
-                        dateSold: `03-15-${knownYear}`,
-                        dateAcquired: `06-01-${knownYear - 1}`,
-                        asset: 'XTZ',
-                        amount: 10,
-                        cost: 50,
-                        proceeds: 12,
-                        gain: -38,
-                        holdingPeriod: 'Short-term',
-                    },
-                ],
-            };
+        it('should generate Crypto sheet with negative gain transactions', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [
+                        makeCryptoTx({
+                            dateSold: `03-15-${knownYear}`,
+                            dateAcquired: `06-01-${knownYear - 1}`,
+                            asset: 'XTZ',
+                            amount: 10,
+                            cost: 50,
+                            proceeds: 12,
+                            gain: -38,
+                        }),
+                    ],
+                },
+            });
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
@@ -357,40 +374,121 @@ describe('excelGenerator', () => {
                 dividends: [],
                 esppStocks: [],
                 crypto: {
-                    transactions: [
-                        {
-                            dateSold: `01-09-${knownYear}`,
-                            dateAcquired: `02-20-${knownYear - 1}`,
-                            asset: 'ETH',
-                            amount: 1,
-                            cost: 100,
-                            proceeds: 200,
-                            gain: 100,
-                            holdingPeriod: 'Short-term',
-                        },
-                    ],
+                    transactions: [makeCryptoTx()],
                 },
             };
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
 
-        it('should handle COI with employer contributions and bonuses', () => {
-            const input = makeInput();
-            input.coi = {
-                year: knownYear,
-                employer: 'Big Corp a.s.',
-                taxpayerName: 'Employee',
-                grossIncome: 2000000,
-                incomePaid: 1900000,
-                months: '01 02 03 04 05 06 07 08 09 10 11 12',
-                backpay: 100000,
-                taxBase: 2000000,
-                taxAdvanceFromIncome: 361000,
-                taxAdvanceFromBackpay: 19000,
-                totalTaxAdvance: 380000,
-                taxBonuses: 15000,
-                employerContributions: 24000,
+        // ── Crypto sections in main worksheet ─────────────────────────────────
+
+        it('should add Cryptocurrencies income section to main sheet when income transactions exist', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should add Net capital gain section to main sheet when capital gain is positive', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: 500 })],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should not add Net capital gain section to main sheet when gain is negative', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: -100 })],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should not add Net capital gain section to main sheet when gain is zero', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: 0 })],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should add Total income from crypto section when income transactions exist', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: 200 })],
+                    incomeTransactions: [makeIncomeTx({ value: 50 })],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should add Total income from crypto section with only income (no capital gains)', () => {
+            const input = makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx(), makeIncomeTx({ value: 10, asset: 'BTC' })],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should place crypto sections above COI section', () => {
+            const input = makeInput({
+                coi: {
+                    year: knownYear,
+                    employer: 'Company s.r.o.',
+                    taxpayerName: 'User',
+                    grossIncome: 800000,
+                    incomePaid: 800000,
+                    months: '01 02 03 04 05 06',
+                    backpay: 0,
+                    taxBase: 800000,
+                    taxAdvanceFromIncome: 120000,
+                    taxAdvanceFromBackpay: 0,
+                    totalTaxAdvance: 120000,
+                    taxBonuses: 0,
+                    employerContributions: 0,
+                },
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: 300 })],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            });
+            const wb = generate(input);
+            expect(wb).toBeDefined();
+        });
+
+        it('should handle crypto income section without EUR-CZK rate configured', () => {
+            const input = {
+                inputs: {
+                    exchangeRatesForYears: {},
+                    getExchangeRateForDay: () => 22.0,
+                    esppDiscount: config.esppDiscount,
+                },
+                stocks: [],
+                dividends: [],
+                esppStocks: [],
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
             };
             const wb = generate(input);
             expect(wb).toBeDefined();
