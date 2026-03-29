@@ -794,25 +794,6 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 5).string('');
     row += 2;
 
-    // === SECTION: Attachment 4 detail ===
-    ws.cell(row, 1).string(locale.taxAtt4Title).style(BLUE_TITLE);
-    ws.cell(row, 2).style(BLUE);
-    ws.cell(row, 3).style(BLUE);
-    ws.cell(row, 4).style(BLUE);
-    ws.cell(row, 5).style(BLUE);
-    row += 1;
-
-    ws.cell(row, 1).string('');
-    ws.cell(row, 2).string(locale.taxRow401);
-    ws.cell(row, 3).string('Dividend income (CZK)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_PLAIN_NUMBER);
-    row += 1;
-    ws.cell(row, 1).string('');
-    ws.cell(row, 2).string(locale.taxRow412);
-    ws.cell(row, 3).string('Tax withheld (CZK)');
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallTaxCzk)},2)`).style(GREEN_PLAIN_NUMBER);
-    row += 2;
-
     // === SECTION: Attachment 2 (crypto capital gains) ===
     if (hasPositiveNetCapGain) {
         const cgRef = (ref) => `'Crypto Gains'!${ref}`;
