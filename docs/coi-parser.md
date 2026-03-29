@@ -6,7 +6,7 @@
 
 ## Problem
 
-Users had to manually look up their employment income from the Czech "Potvrzení o zdanitelných příjmech ze závislé činnosti" (Confirmation of Income / COI) document and manually add it to the computed stock/ESPP values when filling in their tax return. The Tax Instructions sheet said "Add this value to your gross employment income from COI" — but this required the user to cross-reference a separate document.
+Users had to manually look up their employment income from the Czech "Potvrzení o zdanitelných příjmech ze závislé činnosti" (Confirmation of Income / COI) document and manually add it to the computed stock/ESPP values when filling in their tax return. The Tax Form Instructions sheet said "Add this value to your gross employment income from COI" — but this required the user to cross-reference a separate document.
 
 ## Solution
 
@@ -71,7 +71,7 @@ A new **"Confirmation of Income (COI)"** section appears after the summary block
 - Tax bonuses (ř.9) — if non-zero
 - Employer contributions (ř.10) — if non-zero
 
-### Tax Instructions Sheet
+### Tax Form Instructions Sheet
 
 When a COI is uploaded:
 

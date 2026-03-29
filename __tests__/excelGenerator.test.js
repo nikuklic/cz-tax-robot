@@ -158,18 +158,18 @@ describe('excelGenerator', () => {
             expect(input.inputs.exchangeRateKind).toBe('fixed');
         });
 
-        it('should create a Tax Instructions worksheet', () => {
+        it('should create a Tax Form Instructions worksheet', () => {
             const wb = generate(makeInput());
             expect(wb).toBeDefined();
             expect(typeof wb.write).toBe('function');
         });
 
-        it('should create Tax Instructions sheet with empty data', () => {
+        it('should create Tax Form Instructions sheet with empty data', () => {
             const wb = generate(makeInput({ stocks: [], dividends: [], esppStocks: [] }));
             expect(wb).toBeDefined();
         });
 
-        it('should create Tax Instructions sheet with Degiro dividends', () => {
+        it('should create Tax Form Instructions sheet with Degiro dividends', () => {
             const wb = generate(makeInput({
                 stocks: [],
                 dividends: [
@@ -180,7 +180,7 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
-        it('should create Tax Instructions sheet with ESPP stocks', () => {
+        it('should create Tax Form Instructions sheet with ESPP stocks', () => {
             const wb = generate(makeInput({
                 stocks: [
                     { date: `03-15-${knownYear}`, amount: 10, pricePerUnit: 150, price: 1500, source: 'Fidelity' },

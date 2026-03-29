@@ -39,7 +39,7 @@ Upload reports spanning multiple tax years. After parsing, you'll be prompted to
 Upload your Czech "Potvrzení o zdanitelných příjmech ze závislé činnosti" (MFin 5460) PDF alongside your brokerage statements. The COI parser extracts all standard form fields (gross income, tax advances, tax base, etc.) and integrates them into the Excel report:
 
 - **Data sheets**: A dedicated COI section displays all extracted employment income details
-- **Tax Instructions**: Row 31 is auto-computed as `COI gross income + Stock/ESPP income` instead of requiring manual addition
+- **Tax Form Instructions**: Row 31 is auto-computed as `COI gross income + Stock/ESPP income` instead of requiring manual addition
 - **Summary**: COI tax advances are shown as a credit against your total tax liability
 
 The COI is optional — without it, the report generates identically to before.
