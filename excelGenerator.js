@@ -532,6 +532,7 @@ const populateWorksheet = (ws, input, locale) => {
         overallTaxCzk: xl.getExcelCellRef(rowCursor + 2, 2),
         coiGrossIncome: null,
         coiTaxBase: null,
+        coiTaxAdvanceFromIncome: null,
         coiTotalTaxAdvance: null,
         coiTaxBonuses: null,
         coiEmployerContributions: null,
@@ -675,6 +676,7 @@ const populateWorksheet = (ws, input, locale) => {
 
         ws.cell(rowCursor, 1).string(locale.coiTaxAdvanceFromIncome);
         ws.cell(rowCursor, 2).number(input.coi.taxAdvanceFromIncome).style(CZK);
+        summaryRefs.coiTaxAdvanceFromIncome = xl.getExcelCellRef(rowCursor, 2);
         rowCursor += 1;
 
         ws.cell(rowCursor, 1).string(locale.coiTaxAdvanceFromBackpay);
@@ -756,6 +758,16 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
         ws.cell(row, 2).string('Row 40').style(TITLE);
         ws.cell(row, 3).string('Net gain from total crypto and stocks sold within past 3 years');
         ws.cell(row, 4).formula(`ROUND('Crypto Gains'!${netCapGainCzkRef},2)`).style(GREEN_PLAIN_NUMBER);
+        ws.cell(row, 5).string('');
+        row += 1;
+    }
+
+    // Row 84
+    if (summaryRefs.coiTaxAdvanceFromIncome) {
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string('Row 84').style(TITLE);
+        ws.cell(row, 3).string('Row 6 from COI');
+        ws.cell(row, 4).formula(`${enRef(summaryRefs.coiTaxAdvanceFromIncome)}`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
     }
