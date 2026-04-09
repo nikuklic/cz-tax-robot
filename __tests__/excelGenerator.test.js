@@ -493,5 +493,60 @@ describe('excelGenerator', () => {
             const wb = generate(input);
             expect(wb).toBeDefined();
         });
+
+        // ── Czech Tax Form Instructions sheet ────────────────────────────────
+
+        it('should create both EN and CZ tax instructions worksheets', () => {
+            const wb = generate(makeInput());
+            const sheetNames = wb.sheets.map(s => s.name);
+            expect(sheetNames).toContain('Tax Form Instructions');
+            expect(sheetNames).toContain('Pokyny k daňovému přiznání');
+        });
+
+        it('should create CZ instructions sheet with crypto income (Row 35 includes crypto)', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            const sheetNames = wb.sheets.map(s => s.name);
+            expect(sheetNames).toContain('Tax Form Instructions');
+            expect(sheetNames).toContain('Pokyny k daňovému přiznání');
+        });
+
+        it('should create CZ instructions sheet without crypto income (Row 35 stocks only)', () => {
+            const wb = generate(makeInput({ crypto: null }));
+            const sheetNames = wb.sheets.map(s => s.name);
+            expect(sheetNames).toContain('Tax Form Instructions');
+            expect(sheetNames).toContain('Pokyny k daňovému přiznání');
+        });
+
+        it('should create CZ instructions sheet with COI and crypto income', () => {
+            const wb = generate(makeInput({
+                coi: {
+                    year: knownYear,
+                    employer: 'Company s.r.o.',
+                    taxpayerName: 'User',
+                    grossIncome: 800000,
+                    incomePaid: 800000,
+                    months: '01 02 03 04 05 06',
+                    backpay: 0,
+                    taxBase: 800000,
+                    taxAdvanceFromIncome: 120000,
+                    taxAdvanceFromBackpay: 0,
+                    totalTaxAdvance: 120000,
+                    taxBonuses: 0,
+                    employerContributions: 0,
+                },
+                crypto: {
+                    transactions: [makeCryptoTx({ gain: 300 })],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            const sheetNames = wb.sheets.map(s => s.name);
+            expect(sheetNames).toContain('Tax Form Instructions');
+            expect(sheetNames).toContain('Pokyny k daňovému přiznání');
+        });
     });
 });

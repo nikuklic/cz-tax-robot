@@ -171,7 +171,12 @@ const EN = {
     taxSectionSummary: 'Summary',
     taxRow31: 'Row 31',
     taxRow31Desc: 'Gross employment income from COI + Stock Award / ESPP income',
+    taxRow31DescWithCrypto: 'Gross employment income from COI + Stock Award / ESPP income + Crypto rewards income',
     taxRow31Note: 'COI row 1 + Stock/ESPP income. If COI was uploaded, this is auto-computed.',
+    taxRow31AutoPrefix: 'Auto-computed: ',
+    taxRow31AutoCoi: 'COI ř.1',
+    taxRow31AutoStocks: 'Stock/ESPP income',
+    taxRow31AutoCrypto: 'Crypto rewards income',
     taxRow35: 'Row 35',
     taxRow35Desc: 'Employment income from abroad (Stock Award / ESPP income + Crypto rewards income)',
     taxRow35DescNoCrypto: 'Employment income from abroad (Stock Award / ESPP income)',
@@ -179,6 +184,10 @@ const EN = {
     taxRow35NoteNoCrypto: 'Stock Award / ESPP income is foreign employment income not subject to CZ tax withholdings.',
     taxRow36: 'Row 36',
     taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
+    taxRow40: 'Row 40',
+    taxRow40Desc: 'Net gain from total crypto and stocks sold within past 3 years',
+    taxRow84: 'Row 84',
+    taxRow84Desc: 'Row 6 from COI',
     taxDivOption: 'Choose ONE of the two options below for dividend income:',
     taxDivOptionA: 'Option A: Attachment 3 (Foreign Tax Credit)',
     taxDivOptionB: 'Option B: Attachment 4 (Separate Tax Base) – RECOMMENDED',
@@ -192,6 +201,7 @@ const EN = {
     taxRow401Desc: 'Dividend income (CZK) – if using Attachment 4 (Separate Tax Base)',
     taxRow412: 'Row 412',
     taxRow412Desc: 'Tax withheld (CZK) – if using Attachment 4 (Separate Tax Base)',
+    taxAtt2Title: 'Attachment 2',
     taxAtt3Title: 'Attachment 3 – Avoiding Double Taxation',
     taxAtt3Col1: 'Column 1: Foreign entity (e.g. Microsoft US)',
     taxAtt3Col2: 'Column 2: Source country (US)',
@@ -199,6 +209,12 @@ const EN = {
     taxAtt3Col4: 'Column 4: Tax paid abroad (CZK)',
     taxAtt3Col5: 'Column 5: Income taxed abroad (CZK)',
     taxAtt4Title: 'Attachment 4 – Separate Tax Base for Dividends',
+    taxRow207: 'Row 207',
+    taxRow207Desc: 'Total Proceeds (CZK)',
+    taxRow208: 'Row 208',
+    taxRow208Desc: 'Total Acquisition Cost (CZK)',
+    taxRow209: 'Row 209',
+    taxRow209Desc: 'Net Capital Gain (CZK)',
     taxExchangeRateNote: 'Exchange rate source: Pokyn GFŘ-D-63 (annual fixed rate from Czech Financial Authority)',
     taxExchangeRateUrl: 'https://www.financnisprava.cz/assets/cs/prilohy/d-sprava-dani-a-poplatku/Pokyn_GFR-D-63.pdf',
     taxFormUrl: 'https://www.daneelektronicky.cz/',
@@ -253,6 +269,67 @@ const CZ = {
     cryptoTotalSection: 'Celkový příjem z kryptoměn',
     cryptoTotalEUR: 'Celkový příjem z kryptoměn (EUR)',
     cryptoTotalCZK: 'Celkový příjem z kryptoměn (CZK)',
+    taxInstructionsSheet: 'Pokyny k daňovému přiznání',
+    taxInstructionsTitle: 'Pokyny k podání daňového přiznání',
+    taxInstructionsSubtitle: 'Jak použít vypočtené hodnoty v českém daňovém přiznání (DAP)',
+    taxFormSection: 'Část formuláře',
+    taxFormRow: 'Řádek / Pole',
+    taxDescription: 'Popis',
+    taxValue: 'Vaše hodnota (CZK)',
+    taxNotes: 'Poznámky',
+    taxSectionEmployment: 'Pokyny k formuláři',
+    taxSectionDividends: 'Příjmy z dividend',
+    taxSectionAttachments: 'Přílohy',
+    taxSectionSummary: 'Souhrn',
+    taxRow31: 'Řádek 31',
+    taxRow31Desc: 'Hrubé příjmy ze zaměstnání (COI + akcie/ESPP)',
+    taxRow31DescWithCrypto: 'Hrubé příjmy ze zaměstnání (COI + akcie/ESPP + odměny z kryptoměn)',
+    taxRow31Note: 'COI ř.1 + příjmy z akcií/ESPP. Pokud bylo nahráno COI, hodnota se vypočítá automaticky.',
+    taxRow31AutoPrefix: 'Automaticky: ',
+    taxRow31AutoCoi: 'COI ř.1',
+    taxRow31AutoStocks: 'Příjmy z akcií/ESPP',
+    taxRow31AutoCrypto: 'Odměny z kryptoměn',
+    taxRow35: 'Řádek 35',
+    taxRow35Desc: 'Příjmy ze závislé činnosti ze zahraničí (akcie/ESPP + odměny z kryptoměn)',
+    taxRow35DescNoCrypto: 'Příjmy ze závislé činnosti ze zahraničí (akcie/ESPP)',
+    taxRow35Note: 'Nabyté akcie celkem + odměny z kryptoměn. Jde o zahraniční příjmy ze závislé činnosti nepodléhající srážkové dani v ČR.',
+    taxRow35NoteNoCrypto: 'Příjmy z akcií/ESPP jsou zahraniční příjmy ze závislé činnosti nepodléhající srážkové dani v ČR.',
+    taxRow36: 'Řádek 36',
+    taxRow36Desc: 'Přepište z řádku 34. Pokud nemáte jiné příjmy, přepište také na řádky 42 a 45.',
+    taxRow40: 'Řádek 40',
+    taxRow40Desc: 'Čistý zisk z prodeje kryptoměn a akcií za poslední 3 roky',
+    taxRow84: 'Řádek 84',
+    taxRow84Desc: 'Řádek 6 z COI',
+    taxDivOption: 'Zvolte JEDNU z níže uvedených možností pro dividendové příjmy:',
+    taxDivOptionA: 'Možnost A: Příloha 3 (Zápočet daně zaplacené v zahraničí)',
+    taxDivOptionB: 'Možnost B: Příloha 4 (Samostatný základ daně) – DOPORUČENO',
+    taxRow321: 'Řádek 321',
+    taxRow321Desc: 'Dividendové příjmy (CZK) – pouze při použití přílohy 3',
+    taxRow323: 'Řádek 323',
+    taxRow323Desc: 'Srážková daň (CZK) – pouze při použití přílohy 3',
+    taxRow38: 'Řádek 38',
+    taxRow38Desc: 'Součet kapitálových příjmů (dividendy) – pouze při použití přílohy 3',
+    taxRow401: 'Řádek 401 / 406 / 411',
+    taxRow401Desc: 'Dividendové příjmy (CZK) – při použití přílohy 4 (samostatný základ daně)',
+    taxRow412: 'Řádek 412',
+    taxRow412Desc: 'Srážková daň (CZK) – při použití přílohy 4 (samostatný základ daně)',
+    taxAtt2Title: 'Příloha 2',
+    taxAtt3Title: 'Příloha 3 – Zamezení dvojího zdanění',
+    taxAtt3Col1: 'Sloupec 1: Zahraniční subjekt (např. Microsoft US)',
+    taxAtt3Col2: 'Sloupec 2: Zdrojová země (USA)',
+    taxAtt3Col3: 'Sloupec 3: Daň zaplacená v zahraničí (cizí měna)',
+    taxAtt3Col4: 'Sloupec 4: Daň zaplacená v zahraničí (CZK)',
+    taxAtt3Col5: 'Sloupec 5: Příjmy zdaněné v zahraničí (CZK)',
+    taxAtt4Title: 'Příloha 4 – Samostatný základ daně z dividend',
+    taxRow207: 'Řádek 207',
+    taxRow207Desc: 'Celkové výnosy (CZK)',
+    taxRow208: 'Řádek 208',
+    taxRow208Desc: 'Celkové pořizovací náklady (CZK)',
+    taxRow209: 'Řádek 209',
+    taxRow209Desc: 'Čistý kapitálový zisk (CZK)',
+    taxExchangeRateNote: 'Zdroj kurzu: Pokyn GFŘ-D-63 (roční pevný kurz Finanční správy ČR)',
+    taxExchangeRateUrl: 'https://www.financnisprava.cz/assets/cs/prilohy/d-sprava-dani-a-poplatku/Pokyn_GFR-D-63.pdf',
+    taxFormUrl: 'https://www.daneelektronicky.cz/',
 };
 
 /**
@@ -272,7 +349,7 @@ const generate = (input) => {
 
     const cz_ws = wb.addWorksheet(CZ.sheet, WORKSHEET_OPTIONS);
     input.inputs.exchangeRateKind = 'fixed';
-    populateWorksheet(cz_ws, input, CZ);
+    const { summaryRefs: czSummaryRefs } = populateWorksheet(cz_ws, input, CZ);
 
     // const cz_custom_ws = wb.addWorksheet(CZ.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
     // input.inputs.exchangeRateKind = 'variable';
@@ -293,6 +370,9 @@ const generate = (input) => {
 
     const instructions_ws = wb.addWorksheet(EN.taxInstructionsSheet, INSTRUCTIONS_WORKSHEET_OPTIONS);
     populateTaxInstructionsSheet(instructions_ws, input, EN, enSummaryRefs, netCapGainCzkRef, totalIncomeCzkRef, totalProceedsCzkRef, totalAcquisitionCostCzkRef, hasPositiveNetCapGain);
+
+    const cz_instructions_ws = wb.addWorksheet(CZ.taxInstructionsSheet, INSTRUCTIONS_WORKSHEET_OPTIONS);
+    populateTaxInstructionsSheet(cz_instructions_ws, input, CZ, czSummaryRefs, netCapGainCzkRef, totalIncomeCzkRef, totalProceedsCzkRef, totalAcquisitionCostCzkRef, hasPositiveNetCapGain);
 
     return wb;
 }
@@ -707,8 +787,8 @@ const populateWorksheet = (ws, input, locale) => {
 const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGainCzkRef, totalIncomeCzkRef, totalProceedsCzkRef, totalAcquisitionCostCzkRef, hasPositiveNetCapGain) => {
     let row = 1;
 
-    // Cross-sheet formula helper: references cells on the English data sheet
-    const enRef = (cellRef) => `'${EN.sheet}'!${cellRef}`;
+    // Cross-sheet formula helper: references cells on the data sheet for this locale
+    const enRef = (cellRef) => `'${locale.sheet}'!${cellRef}`;
     const refs = summaryRefs;
     const hasCoi = !!input.coi;
 
@@ -742,11 +822,9 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     if (hasCoi) row31Parts.push(enRef(refs.coiGrossIncome));
     row31Parts.push(enRef(refs.overallStocksCzk));
     if (hasCryptoIncome) row31Parts.push(`'Crypto Gains'!${totalIncomeCzkRef}`);
-    const row31Desc = hasCryptoIncome
-        ? 'Gross employment income from COI + Stock Award / ESPP income + Crypto rewards income'
-        : locale.taxRow31Desc;
+    const row31Desc = hasCryptoIncome ? locale.taxRow31DescWithCrypto : locale.taxRow31Desc;
     const row31Note = hasCoi || hasCryptoIncome
-        ? `Auto-computed: ${[hasCoi && 'COI ř.1', 'Stock/ESPP income', hasCryptoIncome && 'Crypto rewards income'].filter(Boolean).join(' + ')}`
+        ? `${locale.taxRow31AutoPrefix}${[hasCoi && locale.taxRow31AutoCoi, locale.taxRow31AutoStocks, hasCryptoIncome && locale.taxRow31AutoCrypto].filter(Boolean).join(' + ')}`
         : locale.taxRow31Note;
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow31).style(TITLE);
@@ -770,8 +848,8 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     // Row 40
     if (netCapGainCzkRef) {
         ws.cell(row, 1).string('');
-        ws.cell(row, 2).string('Row 40').style(TITLE);
-        ws.cell(row, 3).string('Net gain from total crypto and stocks sold within past 3 years');
+        ws.cell(row, 2).string(locale.taxRow40).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow40Desc);
         ws.cell(row, 4).formula(`ROUND('Crypto Gains'!${netCapGainCzkRef},2)`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
@@ -780,8 +858,8 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     // Row 84
     if (summaryRefs.coiTaxAdvanceFromIncome) {
         ws.cell(row, 1).string('');
-        ws.cell(row, 2).string('Row 84').style(TITLE);
-        ws.cell(row, 3).string('Row 6 from COI');
+        ws.cell(row, 2).string(locale.taxRow84).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow84Desc);
         ws.cell(row, 4).formula(`${enRef(summaryRefs.coiTaxAdvanceFromIncome)}`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
@@ -825,7 +903,7 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     if (hasPositiveNetCapGain) {
         const cgRef = (ref) => `'Crypto Gains'!${ref}`;
 
-        ws.cell(row, 1).string('Attachment 2').style(BLUE_TITLE);
+        ws.cell(row, 1).string(locale.taxAtt2Title).style(BLUE_TITLE);
         ws.cell(row, 2).style(BLUE);
         ws.cell(row, 3).style(BLUE);
         ws.cell(row, 4).style(BLUE);
@@ -833,22 +911,22 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
         row += 1;
 
         ws.cell(row, 1).string('');
-        ws.cell(row, 2).string('Row 207').style(TITLE);
-        ws.cell(row, 3).string('Total Proceeds (CZK)');
+        ws.cell(row, 2).string(locale.taxRow207).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow207Desc);
         ws.cell(row, 4).formula(`ROUND(${cgRef(totalProceedsCzkRef)},2)`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
 
         ws.cell(row, 1).string('');
-        ws.cell(row, 2).string('Row 208').style(TITLE);
-        ws.cell(row, 3).string('Total Acquisition Cost (CZK)');
+        ws.cell(row, 2).string(locale.taxRow208).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow208Desc);
         ws.cell(row, 4).formula(`ROUND(${cgRef(totalAcquisitionCostCzkRef)},2)`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 1;
 
         ws.cell(row, 1).string('');
-        ws.cell(row, 2).string('Row 209').style(TITLE);
-        ws.cell(row, 3).string('Net Capital Gain (CZK)');
+        ws.cell(row, 2).string(locale.taxRow209).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow209Desc);
         ws.cell(row, 4).formula(`ROUND(${cgRef(netCapGainCzkRef)},2)`).style(GREEN_PLAIN_NUMBER);
         ws.cell(row, 5).string('');
         row += 2;
