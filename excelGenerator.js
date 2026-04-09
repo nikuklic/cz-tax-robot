@@ -173,8 +173,10 @@ const EN = {
     taxRow31Desc: 'Gross employment income from COI + Stock Award / ESPP income',
     taxRow31Note: 'COI row 1 + Stock/ESPP income. If COI was uploaded, this is auto-computed.',
     taxRow35: 'Row 35',
-    taxRow35Desc: 'Employment income from abroad (not subject to CZ tax withholdings)',
-    taxRow35Note: 'Stock Award / ESPP income is foreign employment income. Enter the same value here.',
+    taxRow35Desc: 'Employment income from abroad (Stock Award / ESPP income + Crypto rewards income)',
+    taxRow35DescNoCrypto: 'Employment income from abroad (Stock Award / ESPP income)',
+    taxRow35Note: 'Overall stocks acquired + Crypto rewards income. Both are foreign employment income not subject to CZ tax withholdings.',
+    taxRow35NoteNoCrypto: 'Stock Award / ESPP income is foreign employment income not subject to CZ tax withholdings.',
     taxRow36: 'Row 36',
     taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
     taxDivOption: 'Choose ONE of the two options below for dividend income:',
@@ -633,6 +635,7 @@ const populateWorksheet = (ws, input, locale) => {
             capGainDataCzkCell ? `${incomeCzkCell}+${capGainDataCzkCell}` : `${incomeCzkCell}`
         ).style({ ...BLUE, ...CZK });
 
+        summaryRefs.cryptoTotalCzk = xl.getExcelCellRef(totalStartRow + 2, 3);
         rowCursor = totalStartRow + 2; // advance past the last crypto row
     }
 
@@ -750,6 +753,18 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 3).string(row31Desc);
     ws.cell(row, 4).formula(`ROUND(${row31Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(row31Note);
+    row += 1;
+
+    // Row 35
+    const row35Parts = [enRef(refs.overallStocksCzk)];
+    if (hasCryptoIncome) row35Parts.push(enRef(refs.cryptoTotalCzk));
+    const row35Desc = hasCryptoIncome ? locale.taxRow35Desc : locale.taxRow35DescNoCrypto;
+    const row35Note = hasCryptoIncome ? locale.taxRow35Note : locale.taxRow35NoteNoCrypto;
+    ws.cell(row, 1).string('');
+    ws.cell(row, 2).string(locale.taxRow35).style(TITLE);
+    ws.cell(row, 3).string(row35Desc);
+    ws.cell(row, 4).formula(`ROUND(${row35Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
+    ws.cell(row, 5).string(row35Note);
     row += 1;
 
     // Row 40
