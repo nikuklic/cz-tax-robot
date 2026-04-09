@@ -177,11 +177,6 @@ const EN = {
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Stock/ESPP income',
     taxRow31AutoCrypto: 'Crypto rewards income',
-    taxRow35: 'Row 35',
-    taxRow35Desc: 'Employment income from abroad (Stock Award / ESPP income + Crypto rewards income)',
-    taxRow35DescNoCrypto: 'Employment income from abroad (Stock Award / ESPP income)',
-    taxRow35Note: 'Overall stocks acquired + Crypto rewards income. Both are foreign employment income not subject to CZ tax withholdings.',
-    taxRow35NoteNoCrypto: 'Stock Award / ESPP income is foreign employment income not subject to CZ tax withholdings.',
     taxRow36: 'Row 36',
     taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
     taxRow40: 'Row 40',
@@ -289,11 +284,6 @@ const CZ = {
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Příjmy z akcií/ESPP',
     taxRow31AutoCrypto: 'Odměny z kryptoměn',
-    taxRow35: 'Řádek 35',
-    taxRow35Desc: 'Příjmy ze závislé činnosti ze zahraničí (akcie/ESPP + odměny z kryptoměn)',
-    taxRow35DescNoCrypto: 'Příjmy ze závislé činnosti ze zahraničí (akcie/ESPP)',
-    taxRow35Note: 'Nabyté akcie celkem + odměny z kryptoměn. Jde o zahraniční příjmy ze závislé činnosti nepodléhající srážkové dani v ČR.',
-    taxRow35NoteNoCrypto: 'Příjmy z akcií/ESPP jsou zahraniční příjmy ze závislé činnosti nepodléhající srážkové dani v ČR.',
     taxRow36: 'Řádek 36',
     taxRow36Desc: 'Přepište z řádku 34. Pokud nemáte jiné příjmy, přepište také na řádky 42 a 45.',
     taxRow40: 'Řádek 40',
@@ -715,7 +705,6 @@ const populateWorksheet = (ws, input, locale) => {
             capGainDataCzkCell ? `${incomeCzkCell}+${capGainDataCzkCell}` : `${incomeCzkCell}`
         ).style({ ...BLUE, ...CZK });
 
-        summaryRefs.cryptoTotalCzk = xl.getExcelCellRef(totalStartRow + 2, 3);
         rowCursor = totalStartRow + 2; // advance past the last crypto row
     }
 
@@ -831,18 +820,6 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 3).string(row31Desc);
     ws.cell(row, 4).formula(`ROUND(${row31Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(row31Note);
-    row += 1;
-
-    // Row 35
-    const row35Parts = [enRef(refs.overallStocksCzk)];
-    if (hasCryptoIncome) row35Parts.push(enRef(refs.cryptoTotalCzk));
-    const row35Desc = hasCryptoIncome ? locale.taxRow35Desc : locale.taxRow35DescNoCrypto;
-    const row35Note = hasCryptoIncome ? locale.taxRow35Note : locale.taxRow35NoteNoCrypto;
-    ws.cell(row, 1).string('');
-    ws.cell(row, 2).string(locale.taxRow35).style(TITLE);
-    ws.cell(row, 3).string(row35Desc);
-    ws.cell(row, 4).formula(`ROUND(${row35Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
-    ws.cell(row, 5).string(row35Note);
     row += 1;
 
     // Row 40
