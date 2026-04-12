@@ -535,49 +535,49 @@ describe('excelGenerator', () => {
             expect(sheetNames).toContain('Pokyny k daňovému přiznání');
         });
 
-        // ── Row 401a (crypto rewards income) ─────────────────────────────────
+        // ── Row 401a / 406 / 411 (crypto rewards income) ─────────────────────────────────
 
-        it('should add Row 401a to EN tax instructions when crypto income exists', () => {
+        it('should add Row 401a / 406 / 411 to EN tax instructions when crypto income exists', () => {
             const wb = generate(makeInput({
                 crypto: {
                     transactions: [],
                     incomeTransactions: [makeIncomeTx()],
                 },
             }));
-            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(true);
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a / 406 / 411')).toBe(true);
         });
 
-        it('should add Řádek 401a to CZ tax instructions when crypto income exists', () => {
+        it('should add Řádek 401a / 406 / 411 to CZ tax instructions when crypto income exists', () => {
             const wb = generate(makeInput({
                 crypto: {
                     transactions: [],
                     incomeTransactions: [makeIncomeTx()],
                 },
             }));
-            expect(hasStringInSheet(wb, 'Pokyny k daňovému přiznání', 'Řádek 401a')).toBe(true);
+            expect(hasStringInSheet(wb, 'Pokyny k daňovému přiznání', 'Řádek 401a / 406 / 411')).toBe(true);
         });
 
-        it('should always show Row 401a even without crypto income', () => {
+        it('should always show Row 401a / 406 / 411 even without crypto income', () => {
             const wb = generate(makeInput({ crypto: null }));
-            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(true);
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a / 406 / 411')).toBe(true);
         });
 
-        it('should use dividends-only formula in Row 401a when no crypto income', () => {
+        it('should use dividends-only formula in Row 401a / 406 / 411 when no crypto income', () => {
             const wb = generate(makeInput({ crypto: null }));
-            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
+            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a / 406 / 411');
             const formula = getCellFormula(wb, 'Tax Form Instructions', 'D' + rowOf(labelAddr));
             expect(formula).toMatch(/^ROUND\(/);
             expect(formula).not.toMatch(/Crypto Gains/);
         });
 
-        it('should sum dividends and crypto rewards in Row 401a formula when crypto income exists', () => {
+        it('should sum dividends and crypto rewards in Row 401a / 406 / 411 formula when crypto income exists', () => {
             const wb = generate(makeInput({
                 crypto: {
                     transactions: [],
                     incomeTransactions: [makeIncomeTx()],
                 },
             }));
-            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
+            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a / 406 / 411');
             const formula = getCellFormula(wb, 'Tax Form Instructions', 'D' + rowOf(labelAddr));
             expect(formula).toMatch(/^ROUND\(/);
             expect(formula).toMatch(/Crypto Gains/);
