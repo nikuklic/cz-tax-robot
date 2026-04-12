@@ -557,12 +557,20 @@ describe('excelGenerator', () => {
             expect(hasStringInSheet(wb, 'Pokyny k daňovému přiznání', 'Řádek 401a')).toBe(true);
         });
 
-        it('should not add Row 401a when no crypto income', () => {
+        it('should always show Row 401a even without crypto income', () => {
             const wb = generate(makeInput({ crypto: null }));
-            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(false);
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(true);
         });
 
-        it('should place Row 401a formula referencing Crypto Gains sheet', () => {
+        it('should use dividends-only formula in Row 401a when no crypto income', () => {
+            const wb = generate(makeInput({ crypto: null }));
+            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
+            const formula = getCellFormula(wb, 'Tax Form Instructions', 'D' + rowOf(labelAddr));
+            expect(formula).toMatch(/^ROUND\(/);
+            expect(formula).not.toMatch(/Crypto Gains/);
+        });
+
+        it('should sum dividends and crypto rewards in Row 401a formula when crypto income exists', () => {
             const wb = generate(makeInput({
                 crypto: {
                     transactions: [],
@@ -570,23 +578,14 @@ describe('excelGenerator', () => {
                 },
             }));
             const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
-            expect(labelAddr).not.toBeNull();
-            // Value cell is in column D (same row)
-            const valueAddr = 'D' + rowOf(labelAddr);
-            const formula = getCellFormula(wb, 'Tax Form Instructions', valueAddr);
-            expect(formula).toMatch(/^ROUND\('Crypto Gains'!/);
+            const formula = getCellFormula(wb, 'Tax Form Instructions', 'D' + rowOf(labelAddr));
+            expect(formula).toMatch(/^ROUND\(/);
+            expect(formula).toMatch(/Crypto Gains/);
         });
 
-        it('should place Row 401a immediately after Row 401 / 406 / 411', () => {
-            const wb = generate(makeInput({
-                crypto: {
-                    transactions: [],
-                    incomeTransactions: [makeIncomeTx()],
-                },
-            }));
-            const row401Addr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401 / 406 / 411');
-            const row401aAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
-            expect(rowOf(row401aAddr)).toBe(rowOf(row401Addr) + 1);
+        it('should not have a separate Row 401 / 406 / 411 row', () => {
+            const wb = generate(makeInput());
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401 / 406 / 411')).toBe(false);
         });
 
         // ── Row 31 (employment income — no longer includes crypto) ────────────

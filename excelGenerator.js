@@ -176,8 +176,10 @@ const EN = {
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Stock/ESPP income',
     taxRow401a: 'Row 401a',
-    taxRow401aDesc: 'Crypto rewards income (CZK)',
-    taxRow401aNote: 'Auto-computed from crypto rewards transactions',
+    taxRow401aDesc: 'Dividend income (CZK) – if using Attachment 4 (Separate Tax Base)',
+    taxRow401aDescWithCrypto: 'Dividend income + crypto rewards income (CZK) – if using Attachment 4 (Separate Tax Base)',
+    taxRow401aNote: '',
+    taxRow401aNotWithCrypto: 'Auto-computed: dividends + crypto rewards income',
     taxRow36: 'Row 36',
     taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
     taxRow40: 'Row 40',
@@ -284,8 +286,10 @@ const CZ = {
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Příjmy z akcií/ESPP',
     taxRow401a: 'Řádek 401a',
-    taxRow401aDesc: 'Příjmy z kryptoměn (odměny) (CZK)',
-    taxRow401aNote: 'Automaticky z transakcí příjmů z kryptoměn',
+    taxRow401aDesc: 'Dividendové příjmy (CZK) – při použití přílohy 4 (samostatný základ daně)',
+    taxRow401aDescWithCrypto: 'Dividendové příjmy + příjmy z kryptoměn (odměny) (CZK) – při použití přílohy 4 (samostatný základ daně)',
+    taxRow401aNote: '',
+    taxRow401aNotWithCrypto: 'Automaticky: dividendy + příjmy z kryptoměn',
     taxRow36: 'Řádek 36',
     taxRow36Desc: 'Přepište z řádku 34. Pokud nemáte jiné příjmy, přepište také na řádky 42 a 45.',
     taxRow40: 'Řádek 40',
@@ -840,21 +844,19 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 5).style(GREEN);
     row += 1;
 
-    // Row 401/406/411
-    ws.cell(row, 1).string('');
-    ws.cell(row, 2).string(locale.taxRow401).style(TITLE);
-    ws.cell(row, 3).string(locale.taxRow401Desc);
-    ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_PLAIN_NUMBER);
-    ws.cell(row, 5).string('');
-    row += 1;
-
-    // Row 401a
-    if (hasCryptoIncome) {
+    // Row 401a (dividends + optional crypto rewards)
+    {
+        const dividendsRef = enRef(refs.overallDividendsCzk);
+        const row401aFormula = hasCryptoIncome
+            ? `ROUND(${dividendsRef}+'Crypto Gains'!${totalIncomeCzkRef},2)`
+            : `ROUND(${dividendsRef},2)`;
+        const row401aDesc = hasCryptoIncome ? locale.taxRow401aDescWithCrypto : locale.taxRow401aDesc;
+        const row401aNote = hasCryptoIncome ? locale.taxRow401aNotWithCrypto : locale.taxRow401aNote;
         ws.cell(row, 1).string('');
         ws.cell(row, 2).string(locale.taxRow401a).style(TITLE);
-        ws.cell(row, 3).string(locale.taxRow401aDesc);
-        ws.cell(row, 4).formula(`ROUND('Crypto Gains'!${totalIncomeCzkRef},2)`).style(GREEN_PLAIN_NUMBER);
-        ws.cell(row, 5).string(locale.taxRow401aNote);
+        ws.cell(row, 3).string(row401aDesc);
+        ws.cell(row, 4).formula(row401aFormula).style(GREEN_PLAIN_NUMBER);
+        ws.cell(row, 5).string(row401aNote);
         row += 1;
     }
 
