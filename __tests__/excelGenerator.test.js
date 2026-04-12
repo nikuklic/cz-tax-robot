@@ -1,6 +1,38 @@
 const { generate } = require('../excelGenerator');
 const config = require('../config.json');
 
+// ── Helpers for inspecting generated workbook content ────────────────────────
+
+const hasStringInSheet = (wb, sheetName, str) => {
+    const sheet = wb.sheets.find(s => s.name === sheetName);
+    if (!sheet) return false;
+    return Object.values(sheet.cells).some(cell => {
+        const s = cell && cell.t === 's' ? wb.sharedStrings[cell.v] : null;
+        return s === str;
+    });
+};
+
+/** Returns address of the cell containing the given string, or null. */
+const findCellAddr = (wb, sheetName, str) => {
+    const sheet = wb.sheets.find(s => s.name === sheetName);
+    if (!sheet) return null;
+    const entry = Object.entries(sheet.cells).find(([, cell]) => {
+        const s = cell && cell.t === 's' ? wb.sharedStrings[cell.v] : null;
+        return s === str;
+    });
+    return entry ? entry[0] : null;
+};
+
+/** Returns the formula string for a cell address, or null. */
+const getCellFormula = (wb, sheetName, addr) => {
+    const sheet = wb.sheets.find(s => s.name === sheetName);
+    const cell = sheet && sheet.cells[addr];
+    return (cell && cell.f) || null;
+};
+
+/** Returns row number (1-based) from an Excel address like 'B10'. */
+const rowOf = (addr) => addr ? parseInt(addr.replace(/[A-Z]+/, ''), 10) : null;
+
 describe('excelGenerator', () => {
     // Use the first year with known rates from config
     const knownYear = Object.keys(config.exchangeRates).find(y => {
@@ -427,7 +459,7 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
-        it('should add Total income from crypto section when income transactions exist', () => {
+        it('should generate workbook with crypto income and capital gain transactions', () => {
             const input = makeInput({
                 crypto: {
                     transactions: [makeCryptoTx({ gain: 200 })],
@@ -438,7 +470,7 @@ describe('excelGenerator', () => {
             expect(wb).toBeDefined();
         });
 
-        it('should add Total income from crypto section with only income (no capital gains)', () => {
+        it('should generate workbook with only crypto income (no capital gains)', () => {
             const input = makeInput({
                 crypto: {
                     transactions: [],
@@ -503,7 +535,76 @@ describe('excelGenerator', () => {
             expect(sheetNames).toContain('Pokyny k daňovému přiznání');
         });
 
-        it('should create CZ instructions sheet with crypto income (Row 35 includes crypto)', () => {
+        // ── Row 401a (crypto rewards income) ─────────────────────────────────
+
+        it('should add Row 401a to EN tax instructions when crypto income exists', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(true);
+        });
+
+        it('should add Řádek 401a to CZ tax instructions when crypto income exists', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            expect(hasStringInSheet(wb, 'Pokyny k daňovému přiznání', 'Řádek 401a')).toBe(true);
+        });
+
+        it('should not add Row 401a when no crypto income', () => {
+            const wb = generate(makeInput({ crypto: null }));
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', 'Row 401a')).toBe(false);
+        });
+
+        it('should place Row 401a formula referencing Crypto Gains sheet', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            const labelAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
+            expect(labelAddr).not.toBeNull();
+            // Value cell is in column D (same row)
+            const valueAddr = 'D' + rowOf(labelAddr);
+            const formula = getCellFormula(wb, 'Tax Form Instructions', valueAddr);
+            expect(formula).toMatch(/^ROUND\('Crypto Gains'!/);
+        });
+
+        it('should place Row 401a immediately after Row 401 / 406 / 411', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            const row401Addr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401 / 406 / 411');
+            const row401aAddr = findCellAddr(wb, 'Tax Form Instructions', 'Row 401a');
+            expect(rowOf(row401aAddr)).toBe(rowOf(row401Addr) + 1);
+        });
+
+        // ── Row 31 (employment income — no longer includes crypto) ────────────
+
+        it('should not include crypto income in Row 31 formula', () => {
+            const wb = generate(makeInput({
+                crypto: {
+                    transactions: [],
+                    incomeTransactions: [makeIncomeTx()],
+                },
+            }));
+            const row31Addr = findCellAddr(wb, 'Tax Form Instructions', 'Row 31');
+            const formulaAddr = 'D' + rowOf(row31Addr);
+            const formula = getCellFormula(wb, 'Tax Form Instructions', formulaAddr);
+            expect(formula).not.toMatch(/Crypto Gains/);
+        });
+
+        it('should create CZ instructions sheet with crypto income', () => {
             const wb = generate(makeInput({
                 crypto: {
                     transactions: [],
@@ -515,7 +616,7 @@ describe('excelGenerator', () => {
             expect(sheetNames).toContain('Pokyny k daňovému přiznání');
         });
 
-        it('should create CZ instructions sheet without crypto income (Row 35 stocks only)', () => {
+        it('should create CZ instructions sheet without crypto income', () => {
             const wb = generate(makeInput({ crypto: null }));
             const sheetNames = wb.sheets.map(s => s.name);
             expect(sheetNames).toContain('Tax Form Instructions');

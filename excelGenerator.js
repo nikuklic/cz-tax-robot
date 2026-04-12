@@ -171,12 +171,13 @@ const EN = {
     taxSectionSummary: 'Summary',
     taxRow31: 'Row 31',
     taxRow31Desc: 'Gross employment income from COI + Stock Award / ESPP income',
-    taxRow31DescWithCrypto: 'Gross employment income from COI + Stock Award / ESPP income + Crypto rewards income',
     taxRow31Note: 'COI row 1 + Stock/ESPP income. If COI was uploaded, this is auto-computed.',
     taxRow31AutoPrefix: 'Auto-computed: ',
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Stock/ESPP income',
-    taxRow31AutoCrypto: 'Crypto rewards income',
+    taxRow401a: 'Row 401a',
+    taxRow401aDesc: 'Crypto rewards income (CZK)',
+    taxRow401aNote: 'Auto-computed from crypto rewards transactions',
     taxRow36: 'Row 36',
     taxRow36Desc: 'Copy from Row 34. If no other income, copy to Rows 42 and 45 as well.',
     taxRow40: 'Row 40',
@@ -278,12 +279,13 @@ const CZ = {
     taxSectionSummary: 'Souhrn',
     taxRow31: 'Řádek 31',
     taxRow31Desc: 'Hrubé příjmy ze zaměstnání (COI + akcie/ESPP)',
-    taxRow31DescWithCrypto: 'Hrubé příjmy ze zaměstnání (COI + akcie/ESPP + odměny z kryptoměn)',
     taxRow31Note: 'COI ř.1 + příjmy z akcií/ESPP. Pokud bylo nahráno COI, hodnota se vypočítá automaticky.',
     taxRow31AutoPrefix: 'Automaticky: ',
     taxRow31AutoCoi: 'COI ř.1',
     taxRow31AutoStocks: 'Příjmy z akcií/ESPP',
-    taxRow31AutoCrypto: 'Odměny z kryptoměn',
+    taxRow401a: 'Řádek 401a',
+    taxRow401aDesc: 'Příjmy z kryptoměn (odměny) (CZK)',
+    taxRow401aNote: 'Automaticky z transakcí příjmů z kryptoměn',
     taxRow36: 'Řádek 36',
     taxRow36Desc: 'Přepište z řádku 34. Pokud nemáte jiné příjmy, přepište také na řádky 42 a 45.',
     taxRow40: 'Řádek 40',
@@ -685,27 +687,7 @@ const populateWorksheet = (ws, input, locale) => {
             }
         }
 
-        // Total income from crypto
-        const incomeCzkCell = xl.getExcelCellRef(sectionStartRow + 2, 3);
-        const totalStartRow = lastCryptoSectionEndRow + 2;
-
-        ws.cell(totalStartRow, 1).string(locale.cryptoTotalSection).style(BLUE_TITLE);
-        ws.cell(totalStartRow, 2).style(BLUE);
-        ws.cell(totalStartRow, 3).style(BLUE);
-
-        ws.cell(totalStartRow + 1, 1).string(locale.date).style(HEADER);
-        ws.cell(totalStartRow + 1, 2).string(locale.cryptoTotalEUR).style(HEADER);
-        ws.cell(totalStartRow + 1, 3).string(locale.cryptoTotalCZK).style(HEADER);
-
-        ws.cell(totalStartRow + 2, 1).string(`12-31-${firstTxYear}`);
-        ws.cell(totalStartRow + 2, 2).formula(
-            capGainDataEurCell ? `${totalEurCell}+${capGainDataEurCell}` : `${totalEurCell}`
-        ).style({ ...BLUE, ...EUR });
-        ws.cell(totalStartRow + 2, 3).formula(
-            capGainDataCzkCell ? `${incomeCzkCell}+${capGainDataCzkCell}` : `${incomeCzkCell}`
-        ).style({ ...BLUE, ...CZK });
-
-        rowCursor = totalStartRow + 2; // advance past the last crypto row
+        rowCursor = lastCryptoSectionEndRow; // advance past the last crypto row
     }
 
     // COI Section (if COI data is available)
@@ -810,14 +792,12 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     const row31Parts = [];
     if (hasCoi) row31Parts.push(enRef(refs.coiGrossIncome));
     row31Parts.push(enRef(refs.overallStocksCzk));
-    if (hasCryptoIncome) row31Parts.push(`'Crypto Gains'!${totalIncomeCzkRef}`);
-    const row31Desc = hasCryptoIncome ? locale.taxRow31DescWithCrypto : locale.taxRow31Desc;
-    const row31Note = hasCoi || hasCryptoIncome
-        ? `${locale.taxRow31AutoPrefix}${[hasCoi && locale.taxRow31AutoCoi, locale.taxRow31AutoStocks, hasCryptoIncome && locale.taxRow31AutoCrypto].filter(Boolean).join(' + ')}`
+    const row31Note = hasCoi
+        ? `${locale.taxRow31AutoPrefix}${[hasCoi && locale.taxRow31AutoCoi, locale.taxRow31AutoStocks].filter(Boolean).join(' + ')}`
         : locale.taxRow31Note;
     ws.cell(row, 1).string('');
     ws.cell(row, 2).string(locale.taxRow31).style(TITLE);
-    ws.cell(row, 3).string(row31Desc);
+    ws.cell(row, 3).string(locale.taxRow31Desc);
     ws.cell(row, 4).formula(`ROUND(${row31Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(row31Note);
     row += 1;
@@ -867,6 +847,16 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 4).formula(`ROUND(${enRef(refs.overallDividendsCzk)},2)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string('');
     row += 1;
+
+    // Row 401a
+    if (hasCryptoIncome) {
+        ws.cell(row, 1).string('');
+        ws.cell(row, 2).string(locale.taxRow401a).style(TITLE);
+        ws.cell(row, 3).string(locale.taxRow401aDesc);
+        ws.cell(row, 4).formula(`ROUND('Crypto Gains'!${totalIncomeCzkRef},2)`).style(GREEN_PLAIN_NUMBER);
+        ws.cell(row, 5).string(locale.taxRow401aNote);
+        row += 1;
+    }
 
     // Row 412
     ws.cell(row, 1).string('');
