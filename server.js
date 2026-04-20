@@ -277,7 +277,13 @@ app.post('/status/:token/select-years', (req, res) => {
         // warnings — they'd be misleading (the Excel uses CNB daily rates).
         const exchangeRatesForYears = {};
         const warnings = [];
-        selectedYears.forEach(year => {
+        const yearsToLoad = new Set(selectedYears);
+        // EOY admits the earliest-selected-year − 1 December ESPPs; load that
+        // year's rate too so CZK conversion isn't zero.
+        if (includeEndOfYearEspp && selectedYears.length > 0) {
+            yearsToLoad.add(String(Math.min(...selectedYears.map(Number)) - 1));
+        }
+        Array.from(yearsToLoad).forEach(year => {
             const rates = config.exchangeRates[year];
             if (!rates) {
                 exchangeRatesForYears[year] = { usdCzk: 0, eurCzk: 0 };

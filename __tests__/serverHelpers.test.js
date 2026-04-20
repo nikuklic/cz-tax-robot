@@ -507,7 +507,36 @@ describe('serverHelpers', () => {
             expect(result.crypto.incomeTransactions).toEqual([]);
         });
 
-        it('should include every ESPP purchase when EOY option is ON, regardless of selected years', () => {
+        it('should admit the earliest-selected-year minus 1 December ESPP when EOY is ON', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '12-31-2023' },
+                    { date: '04-12-2024' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2024'], { includeEndOfYearEspp: true });
+            expect(result.esppStocks.map(e => e.date).sort())
+                .toEqual(['04-12-2024', '12-31-2023']);
+        });
+
+        it('should not admit December ESPPs older than earliest-selected-year minus 1 when EOY is ON', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '12-31-2022' },
+                    { date: '04-12-2024' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2024'], { includeEndOfYearEspp: true });
+            expect(result.esppStocks.map(e => e.date)).toEqual(['04-12-2024']);
+        });
+
+        it('should not admit December ESPPs from a year between selected years (gap) when EOY is ON', () => {
             const excelRaw = {
                 inputs: {},
                 stocks: [],
@@ -516,12 +545,14 @@ describe('serverHelpers', () => {
                     { date: '12-31-2022' },
                     { date: '04-12-2023' },
                     { date: '12-31-2023' },
-                    { date: '04-12-2024' },
+                    { date: '04-12-2025' },
                 ],
             };
-            const result = filterByYears(excelRaw, ['2024'], { includeEndOfYearEspp: true });
+            const result = filterByYears(excelRaw, ['2023', '2025'], { includeEndOfYearEspp: true });
+            // earliest selected = 2023, so only Dec 2022 is admitted (Dec 2023
+            // is already in own selected year; 2024 entries are still excluded).
             expect(result.esppStocks.map(e => e.date).sort())
-                .toEqual(['04-12-2023', '04-12-2024', '12-31-2022', '12-31-2023']);
+                .toEqual(['04-12-2023', '04-12-2025', '12-31-2022', '12-31-2023']);
         });
 
         it('should exclude ESPP purchases outside selected years when EOY option is OFF', () => {
