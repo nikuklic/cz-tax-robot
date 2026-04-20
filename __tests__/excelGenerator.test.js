@@ -648,5 +648,77 @@ describe('excelGenerator', () => {
             expect(sheetNames).toContain('Tax Form Instructions');
             expect(sheetNames).toContain('Pokyny k daňovému přiznání');
         });
+
+        // ── End-of-year (December) ESPP note ─────────────────────────────────
+
+        const DEC_NOTE_TITLE = 'Note on the December ESPP purchase (for the Czech Tax Authority, if asked):';
+
+        it('should emit the December ESPP note whenever the EOY option is on', () => {
+            const wb = generate(makeInput({
+                inputs: { endOfYearEsppIncluded: true },
+            }));
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', DEC_NOTE_TITLE)).toBe(true);
+        });
+
+        it('should not emit the December ESPP note when the EOY option is off', () => {
+            const wb = generate(makeInput({
+                inputs: { endOfYearEsppIncluded: false },
+            }));
+            expect(hasStringInSheet(wb, 'Tax Form Instructions', DEC_NOTE_TITLE)).toBe(false);
+        });
+
+        it('should use static text (no dates) in the December ESPP note', () => {
+            const wb = generate(makeInput({
+                inputs: { endOfYearEsppIncluded: true },
+            }));
+            expect(hasStringInSheet(
+                wb,
+                'Tax Form Instructions',
+                'The December ESPP purchase was credited to the brokerage account only after post\u2011close allocation and settlement in January of the following year and therefore appears solely in the January broker statement.'
+            )).toBe(true);
+        });
+
+        // ── Daily-rate mode ───────────────────────────────────────────────────
+
+        it('should generate a workbook in daily-rate mode', () => {
+            const wb = generate(makeInput({
+                inputs: {
+                    includeDailyRateSheets: true,
+                    getExchangeRateForDay: () => 22.5,
+                },
+            }));
+            expect(wb).toBeDefined();
+        });
+
+        it('should set exchangeRateKind=daily when daily rate mode is enabled', () => {
+            const input = makeInput({
+                inputs: {
+                    includeDailyRateSheets: true,
+                    getExchangeRateForDay: () => 22.5,
+                },
+            });
+            generate(input);
+            expect(input.inputs.exchangeRateKind).toBe('daily');
+        });
+
+        it('should handle daily-rate mode across multiple years', () => {
+            const wb = generate(makeInput({
+                inputs: {
+                    includeDailyRateSheets: true,
+                    getExchangeRateForDay: () => 22.5,
+                    exchangeRatesForYears: {
+                        '2024': { usdCzk: 23.15, eurCzk: 25.08 },
+                        '2025': { usdCzk: 21.84, eurCzk: 24.66 },
+                    },
+                },
+                stocks: [
+                    { date: '03-15-2024', amount: 10, pricePerUnit: 150, price: 1500, source: 'Fidelity' },
+                    { date: '06-15-2025', amount: 5, pricePerUnit: 200, price: 1000, source: 'Fidelity' },
+                ],
+                dividends: [],
+                esppStocks: [],
+            }));
+            expect(wb).toBeDefined();
+        });
     });
 });
