@@ -8,7 +8,7 @@ app.use(express.json());
 const port = process.env.port || process.env.PORT || 3000;
 
 const { generate } = require('./excelGenerator');
-const { getExchangeRateForDay } = require('./utils/getExchangeRateForDay');
+const { getExchangeRateForDay, getExchangeRateForDaySync } = require('./utils/getExchangeRateForDay');
 const { parseFromMemory: parseFidelityFromMemory } = require('./fidelityReportsParser');
 const { translateFidelityReports } = require('./fidelityTranslator');
 const { parseFromMemory: parseMorganFromMemory  } = require('./morganStanleyParser');
@@ -253,7 +253,7 @@ app.get('/status/:token/json', (req, res) => {
     }
 });
 
-app.post('/status/:token/select-years', (req, res) => {
+app.post('/status/:token/select-years', async (req, res) => {
     const report = getReport(req.params.token);
     if (!report) {
         return res.status(404).json({ error: 'Report not found' });
@@ -304,10 +304,27 @@ app.post('/status/:token/select-years', (req, res) => {
         const hasEurEntries = filtered.dividends.some(d => d.source === 'Degiro')
             || filtered.stocks.some(s => s.source === 'Degiro');
 
+        // Daily-rate mode pulls per-date CNB rates at render time. The
+        // excelGenerator is synchronous, so pre-warm the cache for every
+        // referenced date (USD + EUR) and pass the sync accessor.
+        if (includeDailyRateSheets) {
+            const dateStrings = new Set();
+            [filtered.stocks, filtered.dividends, filtered.esppStocks].forEach(entries => {
+                entries.forEach(e => e && e.date && dateStrings.add(e.date));
+            });
+            await Promise.all([...dateStrings].map(ds => {
+                const [m, d, y] = ds.split('-').map(Number);
+                return Promise.all([
+                    getExchangeRateForDay(y, m, d, 'USD'),
+                    getExchangeRateForDay(y, m, d, 'EUR'),
+                ]);
+            }));
+        }
+
         filtered.inputs = {
             ...filtered.inputs,
             exchangeRatesForYears,
-            getExchangeRateForDay,
+            getExchangeRateForDay: getExchangeRateForDaySync,
             hasEurEntries,
             includeDailyRateSheets: !!includeDailyRateSheets,
             endOfYearEsppIncluded: !!includeEndOfYearEspp,
