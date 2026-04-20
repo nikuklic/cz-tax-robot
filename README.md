@@ -18,11 +18,6 @@ yarn install
 yarn start
 ```
 
-Clean app restart:
-```
-Get-Process node -EA SilentlyContinue | Stop-Process -Force; node server.js
-```
-
 The web UI will be available at `http://127.0.0.1:3000`.
 
 ## Supported Brokers & Formats

@@ -226,18 +226,13 @@ UI.setupStatusPage = () => {
       return;
     }
 
-    const dailyCb = document.getElementById('cb-daily-rates');
-    const includeDailyRateSheets = !!(dailyCb && dailyCb.checked);
-    const eoyEsppCb = document.getElementById('cb-include-end-of-year-espp');
-    const includeEndOfYearEspp = !!(eoyEsppCb && eoyEsppCb.checked);
-
     btnGenerate.disabled = true;
     spanGenerating.style.display = 'inline';
 
     fetch(location.href + '/select-years', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selectedYears, includeDailyRateSheets, includeEndOfYearEspp })
+      body: JSON.stringify({ selectedYears })
     })
       .then(r => {
         if (!r.ok) throw new Error('Failed to generate report');
@@ -248,7 +243,7 @@ UI.setupStatusPage = () => {
         divYearSelection.style.display = 'none';
 
         // Show year info
-        const selectedStr = selectedYears.slice().sort().join(', ');
+        const selectedStr = selectedYears.sort().join(', ');
         yearWarning.style.display = 'block';
         yearWarning.style.color = '#333';
         let yearInfo = 'Report generated for year(s): ' + selectedStr;
@@ -263,24 +258,12 @@ UI.setupStatusPage = () => {
           exchangeRateWarning.innerHTML = 'Warning: ' + result.warnings.join('<br>Warning: ');
         }
 
-        // ESPP count info: always show the green parsed count. When the count
-        // isn't divisible by 4, append an orange warning — with a Jan-statement
-        // hint when EOY is off, plain otherwise.
+        // ESPP warning: expect 4 purchases per selected year
         const status = result.status;
-        if (status.esppCount !== undefined) {
+        const expectedEspp = 4 * selectedYears.length;
+        if (status.esppCount !== undefined && status.esppCount !== expectedEspp) {
           esppWarning.style.display = 'block';
-          esppWarning.style.color = '#2e7d32';
-          let html = 'You had ' + status.esppCount + ' ESPP purchase(s).';
-          if (status.esppCount % 4 !== 0) {
-            let warning = 'Warning: the number is not divisible by 4.';
-            if (!includeEndOfYearEspp) {
-              const latestYear = selectedYears.slice().sort().slice(-1)[0];
-              const nextYear = Number(latestYear) + 1;
-              warning += ' Did you include the January ' + nextYear + ' broker statement?';
-            }
-            html += '<br><span style="color: #ed6c02;">' + warning + '</span>';
-          }
-          esppWarning.innerHTML = html;
+          esppWarning.innerHTML = 'Warning: The number of ESPP purchases for the selected year(s) is ' + status.esppCount + ' (expected ' + expectedEspp + ' for ' + selectedYears.length + ' year(s)), make sure you uploaded the right statements';
         }
 
         state.done = true;

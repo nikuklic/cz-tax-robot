@@ -109,8 +109,8 @@ const BLUE_CZK = { ... BLUE, ... CZK };
 const BLUE_TITLE = { ... BLUE, ... TITLE };
 
 const EN = {
-    sheet: 'English',
-    sheetCustomExchangeRate: 'English',
+    sheet: 'English fixed USD-CZK',
+    sheetCustomExchangeRate: 'English daily USD-CZK',
     inputs: 'Inputs',
     exchangeRate: 'Exchange Rate',
     esppDiscount: 'ESPP Discount',
@@ -216,17 +216,11 @@ const EN = {
     taxExchangeRateNote: 'Exchange rate source: Pokyn GFŘ-D-63 (annual fixed rate from Czech Financial Authority)',
     taxExchangeRateUrl: 'https://www.financnisprava.cz/assets/cs/prilohy/d-sprava-dani-a-poplatku/Pokyn_GFR-D-63.pdf',
     taxFormUrl: 'https://www.daneelektronicky.cz/',
-    endOfYearEsppNoteTitle: 'Note on the December ESPP purchase (for the Czech Tax Authority, if asked):',
-    endOfYearEsppNoteBody: [
-        'The December ESPP purchase was credited to the brokerage account only after post\u2011close allocation and settlement in January of the following year and therefore appears solely in the January broker statement.',
-        'The acquisition is declared in the tax year corresponding to the official brokerage record in which it is first reflected.',
-        'Settlement timing is determined by the plan administrator and broker and is outside of the participant\u2019s control.',
-    ],
 };
 
 const CZ = {
-    sheet: 'Česky',
-    sheetCustomExchangeRate: 'Česky',
+    sheet: 'Česky roční USD-CZK',
+    sheetCustomExchangeRate: 'Česky denní USD-CZK',
     inputs: 'Vstupy',
     exchangeRate: 'Kurz',
     esppDiscount: 'Sleva pro ESPP',
@@ -332,12 +326,6 @@ const CZ = {
     taxExchangeRateNote: 'Zdroj kurzu: Pokyn GFŘ-D-63 (roční pevný kurz Finanční správy ČR)',
     taxExchangeRateUrl: 'https://www.financnisprava.cz/assets/cs/prilohy/d-sprava-dani-a-poplatku/Pokyn_GFR-D-63.pdf',
     taxFormUrl: 'https://www.daneelektronicky.cz/',
-    endOfYearEsppNoteTitle: 'Poznámka k prosincovému nákupu ESPP (pro Finanční úřad, pokud bude dotázán):',
-    endOfYearEsppNoteBody: [
-        'Prosincový nákup ESPP byl na makléřský účet připsán až po uzávěrce, přidělení a vypořádání v lednu následujícího roku, a proto se objevuje výhradně na lednovém výpisu makléře.',
-        'Nabytí se přiznává ve zdaňovacím období odpovídajícím oficiálnímu makléřskému záznamu, ve kterém je poprvé zohledněno.',
-        'Načasování vypořádání určuje správce plánu a makléř a je mimo kontrolu účastníka.',
-    ],
 };
 
 /**
@@ -347,14 +335,21 @@ const CZ = {
 const generate = (input) => {
     const wb = new xl.Workbook();
 
-    const useDaily = !!(input.inputs.includeDailyRateSheets && input.inputs.getExchangeRateForDay);
-    input.inputs.exchangeRateKind = useDaily ? 'daily' : 'fixed';
-
     const en_ws = wb.addWorksheet(EN.sheet, WORKSHEET_OPTIONS);
+    input.inputs.exchangeRateKind = 'fixed';
     const { summaryRefs: enSummaryRefs, yearExchangeRateRows: enYearExchangeRateRows } = populateWorksheet(en_ws, input, EN);
 
+    // const en_custom_ws = wb.addWorksheet(EN.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
+    // input.inputs.exchangeRateKind = 'variable';
+    // populateWorksheet(en_custom_ws, input, EN);
+
     const cz_ws = wb.addWorksheet(CZ.sheet, WORKSHEET_OPTIONS);
+    input.inputs.exchangeRateKind = 'fixed';
     const { summaryRefs: czSummaryRefs } = populateWorksheet(cz_ws, input, CZ);
+
+    // const cz_custom_ws = wb.addWorksheet(CZ.sheetCustomExchangeRate, WORKSHEET_OPTIONS);
+    // input.inputs.exchangeRateKind = 'variable';
+    // populateWorksheet(cz_custom_ws, input, CZ);
 
     let netCapGainCzkRef = null;
     let totalIncomeCzkRef = null;
@@ -381,14 +376,6 @@ const generate = (input) => {
 const populateWorksheet = (ws, input, locale) => {
     let rowCursor = 1;
 
-    const isDailyMode = input.inputs.exchangeRateKind === 'daily';
-    const getDailyRate = input.inputs.getExchangeRateForDay;
-    const dailyRateFor = (dateString, currency = 'USD') => {
-        if (!getDailyRate) return 0;
-        const [m, d, y] = dateString.split('-').map(Number);
-        return getDailyRate(y, m, d, currency) || 0;
-    };
-
     // Inputs: per-year exchange rates
     ws.cell(rowCursor + 0, 1).string(locale.inputs).style(TITLE);
 
@@ -401,26 +388,31 @@ const populateWorksheet = (ws, input, locale) => {
     let rateRowOffset = 1;
     years.forEach(year => {
         const rates = exchangeRatesForYears[year];
-        let usdRow = null;
-        if (!isDailyMode) {
-            usdRow = rowCursor + rateRowOffset;
-            ws.cell(usdRow, 1).string(`${locale.exchangeRateUSDCZK} (${year})`);
+        const usdRow = rowCursor + rateRowOffset;
+        ws.cell(usdRow, 1).string(`${locale.exchangeRateUSDCZK} (${year})`);
+        if (input.inputs.exchangeRateKind === 'fixed') {
             if (rates.usdCzk === 0) {
                 ws.cell(usdRow, 2).number(0).style({ ...CZK, ...WARNING });
             } else {
                 ws.cell(usdRow, 2).number(rates.usdCzk).style(CZK);
             }
-            rateRowOffset += 1;
+        } else {
+            ws.cell(usdRow, 2).string(input.inputs.exchangeRateKind);
         }
+        rateRowOffset += 1;
 
         let eurRow = null;
         if (hasEurEntries) {
             eurRow = rowCursor + rateRowOffset;
             ws.cell(eurRow, 1).string(`${locale.exchangeRateEURCZK} (${year})`);
-            if (rates.eurCzk === 0) {
-                ws.cell(eurRow, 2).number(0).style({ ...CZK, ...WARNING });
+            if (input.inputs.exchangeRateKind === 'fixed') {
+                if (rates.eurCzk === 0) {
+                    ws.cell(eurRow, 2).number(0).style({ ...CZK, ...WARNING });
+                } else {
+                    ws.cell(eurRow, 2).number(rates.eurCzk).style(CZK);
+                }
             } else {
-                ws.cell(eurRow, 2).number(rates.eurCzk).style(CZK);
+                ws.cell(eurRow, 2).string(input.inputs.exchangeRateKind);
             }
             rateRowOffset += 1;
         }
@@ -463,33 +455,12 @@ const populateWorksheet = (ws, input, locale) => {
         const year = getYearFromDate(dateString);
         const yearRows = yearExchangeRateRows[year] || yearExchangeRateRows['_default'] || yearExchangeRateRows[years[0]];
         if (!yearRows) {
+            // Fallback: first available
             const firstKey = Object.keys(yearExchangeRateRows)[0];
             const fallback = yearExchangeRateRows[firstKey];
             return [fallback.usdRow, 2];
         }
         return [yearRows.usdRow, 2];
-    };
-
-    // Helper: write the CZK-equivalent of a foreign-currency row cell. The
-    // three branches (CZK source / daily rate / annual fixed rate) differ only
-    // in how the CZK value is produced; the caller supplies the row, the
-    // source-value column (to build a formula) and the CZK column to write.
-    // When rateCol is provided and we're in daily mode, the daily rate used is
-    // also dumped into that column for auditability.
-    const writeCzkFromForeign = ({ row, valueCol, czkCol, rateCol, value, source, date }) => {
-        const valueRef = xl.getExcelCellRef(row, valueCol);
-        if (isSourceCZK(source)) {
-            ws.cell(row, czkCol).formula(`${valueRef}`).style(CZK);
-            return;
-        }
-        if (isDailyMode) {
-            const rate = dailyRateFor(date);
-            ws.cell(row, czkCol).number(value * rate).style(CZK);
-            if (rateCol) ws.cell(row, rateCol).number(rate).style(CZK);
-            return;
-        }
-        const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(source, date));
-        ws.cell(row, czkCol).formula(`${valueRef}*${exchangeRate}`).style(CZK);
     };
 
     // Stocks
@@ -503,19 +474,22 @@ const populateWorksheet = (ws, input, locale) => {
     ws.cell(rowCursor + 1, 3).string(locale.priceUSD).style(HEADER);
     ws.cell(rowCursor + 1, 4).string(locale.amount).style(HEADER);
     ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
-    if (isDailyMode) {
-        ws.cell(rowCursor + 1, 6).string(locale.exchangeRateUSDCZK).style(HEADER);
-    }
 
     rowCursor += SKIP_HEADER;
     input.stocks.sort(compareDates).forEach((s, i) => {
-        const r = rowCursor + i;
-        ws.cell(r, 1).string(s.date);
+        ws.cell(rowCursor + i, 1).string(s.date);
         const style = isSourceCZK(s.source) ? CZK : USD;
-        ws.cell(r, 2).number(s.pricePerUnit).style(style);
-        ws.cell(r, 3).number(s.price).style(style);
-        ws.cell(r, 4).number(s.amount);
-        writeCzkFromForeign({ row: r, valueCol: 3, czkCol: 5, rateCol: 6, value: s.price, source: s.source, date: s.date });
+        ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
+        ws.cell(rowCursor + i, 3).number(s.price).style(style);
+        ws.cell(rowCursor + i, 4).number(s.amount);
+
+        const price = xl.getExcelCellRef(rowCursor + i, 3);
+        if (isSourceCZK(s.source)) {
+            ws.cell(rowCursor + i, 5).formula(`${price}`).style(CZK);
+        } else {
+            const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
+            ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+        }
     });
 
     ws.cell(rowCursor + input.stocks.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -537,20 +511,24 @@ const populateWorksheet = (ws, input, locale) => {
     ws.cell(rowCursor + 1, 4).string(locale.dividendsCZK).style(HEADER);
     ws.cell(rowCursor + 1, 5).string(locale.taxUSD).style(HEADER);
     ws.cell(rowCursor + 1, 6).string(locale.taxCZK).style(HEADER);
-    if (isDailyMode) {
-        ws.cell(rowCursor + 1, 7).string(locale.exchangeRateUSDCZK).style(HEADER);
-    }
 
     rowCursor += SKIP_HEADER;
     input.dividends.sort(compareDates).forEach((d, i) => {
-        const r = rowCursor + i;
-        ws.cell(r, 1).string(d.date);
-        ws.cell(r, 2).string(d.source);
+        ws.cell(rowCursor + i, 1).string(d.date);
+        ws.cell(rowCursor + i, 2).string(d.source);
         const style = isSourceCZK(d.source) ? CZK : USD;
-        ws.cell(r, 3).number(d.amount).style(style);
-        ws.cell(r, 5).number(d.tax).style(style);
-        writeCzkFromForeign({ row: r, valueCol: 3, czkCol: 4, rateCol: 7, value: d.amount, source: d.source, date: d.date });
-        writeCzkFromForeign({ row: r, valueCol: 5, czkCol: 6, rateCol: null, value: d.tax, source: d.source, date: d.date });
+        ws.cell(rowCursor + i, 3).number(d.amount).style(style);
+        const dividends = xl.getExcelCellRef(rowCursor + i, 3);
+        ws.cell(rowCursor + i, 5).number(d.tax).style(style);
+        const tax = xl.getExcelCellRef(rowCursor + i, 5);
+        if (isSourceCZK(d.source)) {
+            ws.cell(rowCursor + i, 4).formula(`${dividends}`).style(CZK);
+            ws.cell(rowCursor + i, 6).formula(`${tax}`).style(CZK);
+        } else {
+            const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(d.source, d.date));
+            ws.cell(rowCursor + i, 4).formula(`${dividends}*${exchangeRate}`).style(CZK);
+            ws.cell(rowCursor + i, 6).formula(`${tax}*${exchangeRate}`).style(CZK);
+        }
     });
 
     ws.cell(rowCursor + input.dividends.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -577,19 +555,22 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + 1, 3).string(locale.priceUSD).style(HEADER);
         ws.cell(rowCursor + 1, 4).string(locale.amount).style(HEADER);
         ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
-        if (isDailyMode) {
-            ws.cell(rowCursor + 1, 6).string(locale.exchangeRateUSDCZK).style(HEADER);
-        }
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort(compareDates).forEach((s, i) => {
-            const r = rowCursor + i;
-            ws.cell(r, 1).string(s.date);
+            ws.cell(rowCursor + i, 1).string(s.date);
             const style = isSourceCZK(s.source) ? CZK : USD;
-            ws.cell(r, 2).number(s.pricePerUnit).style(style);
-            ws.cell(r, 3).number(s.price).style(style);
-            ws.cell(r, 4).number(s.amount);
-            writeCzkFromForeign({ row: r, valueCol: 3, czkCol: 5, rateCol: 6, value: s.price, source: s.source, date: s.date });
+            ws.cell(rowCursor + i, 2).number(s.pricePerUnit).style(style);
+            ws.cell(rowCursor + i, 3).number(s.price).style(style);
+            ws.cell(rowCursor + i, 4).number(s.amount);
+
+            const price = xl.getExcelCellRef(rowCursor + i, 3);
+            if (isSourceCZK(s.source)) {
+                ws.cell(rowCursor + i, 5).formula(`${price}`).style(CZK);
+            } else {
+                const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
+                ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
+            }
         });
 
         ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -824,21 +805,6 @@ const populateTaxInstructionsSheet = (ws, input, locale, summaryRefs, netCapGain
     ws.cell(row, 4).formula(`ROUND(${row31Parts.join('+')},2)`).style(GREEN_PLAIN_NUMBER);
     ws.cell(row, 5).string(row31Note);
     row += 1;
-
-    // End-of-year ESPP rationale — shown whenever the EOY option is enabled.
-    // Static text; no date parsing.
-    if (input.inputs.endOfYearEsppIncluded) {
-        row += 1;
-        ws.cell(row, 5).string(locale.endOfYearEsppNoteTitle).style(TITLE);
-        row += 1;
-        const noteLines = Array.isArray(locale.endOfYearEsppNoteBody)
-            ? locale.endOfYearEsppNoteBody
-            : [locale.endOfYearEsppNoteBody];
-        noteLines.forEach(line => {
-            ws.cell(row, 5).string(line);
-            row += 1;
-        });
-    }
 
     // Row 40
     if (netCapGainCzkRef) {
