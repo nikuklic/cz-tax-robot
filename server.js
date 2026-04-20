@@ -211,7 +211,7 @@ const enqueueReportsProcessing = (files) => {
     return token;
 }
 
-const { getFoundYears, getESPPCount, filterByYears } = require('./serverHelpers');
+const { getFoundYears, filterByYears } = require('./serverHelpers');
 
 app.get('/api/config', (req, res) => {
     res.json({ exchangeRates: config.exchangeRates });
@@ -262,7 +262,7 @@ app.post('/status/:token/select-years', (req, res) => {
         return res.status(400).json({ error: 'Report data not ready yet' });
     }
 
-    const { selectedYears } = req.body;
+    const { selectedYears, includeDailyRateSheets, includeEndOfYearEspp } = req.body;
     if (!Array.isArray(selectedYears) || selectedYears.length === 0) {
         return res.status(400).json({ error: 'selectedYears must be a non-empty array' });
     }
@@ -270,21 +270,25 @@ app.post('/status/:token/select-years', (req, res) => {
     try {
         report.status.excel = 'generating-excel';
 
-        const filtered = filterByYears(report.output.excelRaw, selectedYears);
+        const filtered = filterByYears(report.output.excelRaw, selectedYears, { includeEndOfYearEspp: !!includeEndOfYearEspp });
 
-        // Build per-year exchange rates for the excel generator
+        // Build per-year exchange rates for the excel generator. In daily-rate
+        // mode the annual table isn't used, so we skip the "unknown annual rate"
+        // warnings — they'd be misleading (the Excel uses CNB daily rates).
         const exchangeRatesForYears = {};
         const warnings = [];
         selectedYears.forEach(year => {
             const rates = config.exchangeRates[year];
             if (!rates) {
                 exchangeRatesForYears[year] = { usdCzk: 0, eurCzk: 0 };
-                warnings.push(`No exchange rate configured for year ${year}. CZK values will be 0.`);
+                if (!includeDailyRateSheets) {
+                    warnings.push(`No exchange rate configured for year ${year}. CZK values will be 0.`);
+                }
             } else {
                 const usd = rates.usdCzk === 'unknown' ? 0 : rates.usdCzk;
                 const eur = rates.eurCzk === 'unknown' ? 0 : rates.eurCzk;
                 exchangeRatesForYears[year] = { usdCzk: usd, eurCzk: eur };
-                if (rates.usdCzk === 'unknown' || rates.eurCzk === 'unknown') {
+                if (!includeDailyRateSheets && (rates.usdCzk === 'unknown' || rates.eurCzk === 'unknown')) {
                     warnings.push(`Exchange rate for year ${year} is unknown. CZK values for that year will be 0. Please update config.json.`);
                 }
             }
@@ -299,13 +303,16 @@ app.post('/status/:token/select-years', (req, res) => {
             exchangeRatesForYears,
             getExchangeRateForDay,
             hasEurEntries,
+            includeDailyRateSheets: !!includeDailyRateSheets,
+            endOfYearEsppIncluded: !!includeEndOfYearEspp,
         };
 
         report.output.excelRaw = filtered;
         report.output.excel = generate(filtered);
         report.status.foundYears = getFoundYears(filtered);
         report.status.selectedYears = selectedYears;
-        report.status.esppCount = getESPPCount(filtered, selectedYears);
+        report.status.esppCount = filtered.esppStocks.length;
+        report.status.endOfYearEsppIncluded = !!includeEndOfYearEspp;
         report.status.exchangeRateWarnings = warnings;
         report.status.excel = 'done';
 

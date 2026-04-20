@@ -4,10 +4,7 @@ function getYearFromDate(dateStr) {
 }
 
 function getESPPCount(excelRaw, selectedYears) {
-    return excelRaw.esppStocks.reduce((acc, esppEntry) => {
-        const year = getYearFromDate(esppEntry.date);
-        return acc + (selectedYears.includes(year) ? 1 : 0);
-    }, 0);
+    return excelRaw.esppStocks.filter(e => selectedYears.includes(getYearFromDate(e.date))).length;
 }
 
 function getFoundYears(excelRaw) {
@@ -38,18 +35,20 @@ function getFoundYears(excelRaw) {
     return Array.from(years).sort();
 }
 
-function filterByYears(excelRaw, selectedYears) {
-    const filterEntries = entries =>
-        entries.filter(entry => {
-            const year = getYearFromDate(entry.date);
-            return selectedYears.includes(year);
-        });
+function filterByYears(excelRaw, selectedYears, options = {}) {
+    const filterByYear = entries =>
+        entries.filter(e => selectedYears.includes(getYearFromDate(e.date)));
+
+    // EOY option on: include every ESPP purchase parsed, regardless of year.
+    const esppStocks = options.includeEndOfYearEspp
+        ? excelRaw.esppStocks.slice()
+        : filterByYear(excelRaw.esppStocks);
 
     return {
         ...excelRaw,
-        stocks: filterEntries(excelRaw.stocks),
-        dividends: filterEntries(excelRaw.dividends),
-        esppStocks: filterEntries(excelRaw.esppStocks),
+        stocks: filterByYear(excelRaw.stocks),
+        dividends: filterByYear(excelRaw.dividends),
+        esppStocks,
         coi: excelRaw.coi && selectedYears.includes(excelRaw.coi.year) ? excelRaw.coi : null,
         crypto: excelRaw.crypto ? {
             transactions: excelRaw.crypto.transactions.filter(t => {

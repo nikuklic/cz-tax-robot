@@ -32,4 +32,32 @@ describe('getExchangeRateForDay', () => {
         const rate2 = getExchangeRateForDay(2019, 6, 10);
         expect(rate1).toBe(rate2);
     });
+
+    it('should return an EUR rate when currency=EUR is requested', () => {
+        // 2024-EUR-CZK.json ships in the repo
+        const rate = getExchangeRateForDay(2024, 6, 10, 'EUR');
+        expect(rate).toBeGreaterThan(0);
+        expect(typeof rate).toBe('number');
+    });
+
+    it('should differ between EUR and USD for the same day', () => {
+        // Rough sanity: EUR-CZK and USD-CZK are not identical
+        const usd = getExchangeRateForDay(2024, 6, 10, 'USD');
+        const eur = getExchangeRateForDay(2024, 6, 10, 'EUR');
+        expect(usd).toBeGreaterThan(0);
+        expect(eur).toBeGreaterThan(0);
+        expect(usd).not.toBe(eur);
+    });
+
+    it('should walk across year boundary when Jan 1 has no quote', () => {
+        // Jan 1 is a public holiday; the function should walk into the
+        // previous year's rate file.
+        const rate = getExchangeRateForDay(2024, 1, 1, 'USD');
+        expect(rate).toBeGreaterThan(0);
+    });
+
+    it('should return 0 for a currency file that does not exist', () => {
+        const rate = getExchangeRateForDay(2024, 6, 10, 'XXX');
+        expect(rate).toBe(0);
+    });
 });

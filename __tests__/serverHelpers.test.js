@@ -506,5 +506,99 @@ describe('serverHelpers', () => {
             const result = filterByYears(excelRaw, ['2025']);
             expect(result.crypto.incomeTransactions).toEqual([]);
         });
+
+        it('should include every ESPP purchase when EOY option is ON, regardless of selected years', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '12-31-2022' },
+                    { date: '04-12-2023' },
+                    { date: '12-31-2023' },
+                    { date: '04-12-2024' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2024'], { includeEndOfYearEspp: true });
+            expect(result.esppStocks.map(e => e.date).sort())
+                .toEqual(['04-12-2023', '04-12-2024', '12-31-2022', '12-31-2023']);
+        });
+
+        it('should exclude ESPP purchases outside selected years when EOY option is OFF', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [{ date: '12-31-2023' }],
+            };
+            const result = filterByYears(excelRaw, ['2024']);
+            expect(result.esppStocks).toHaveLength(0);
+        });
+
+        it('should include a 12-31 ESPP lot in its purchase year when EOY option is OFF (from Jan next-year statement)', () => {
+            // User uploaded the Jan 2025 broker statement alongside the 2024
+            // statements to capture the 12-31-2024 ESPP purchase. With EOY
+            // off, that purchase belongs to its own calendar year (2024).
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [{ date: '12-31-2024' }],
+            };
+            const result = filterByYears(excelRaw, ['2024']);
+            expect(result.esppStocks.map(e => e.date)).toEqual(['12-31-2024']);
+        });
+
+        it('should include the full 4-purchase set in the selected year when Jan next-year statement is uploaded and EOY is OFF', () => {
+            // Typical scenario: four quarterly ESPP purchases in 2024, with the
+            // Q4 purchase dated 12-31-2024 appearing via the Jan 2025 statement.
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '03-31-2024' },
+                    { date: '06-30-2024' },
+                    { date: '09-30-2024' },
+                    { date: '12-31-2024' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2024']);
+            expect(result.esppStocks).toHaveLength(4);
+        });
+
+        it('should include December ESPP purchases in each selected year when EOY is OFF', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '12-31-2023' },
+                    { date: '12-31-2024' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2023', '2024']);
+            expect(result.esppStocks.map(e => e.date).sort())
+                .toEqual(['12-31-2023', '12-31-2024']);
+        });
+
+        it('should include all December ESPP lots regardless of day in the selected year when EOY is OFF', () => {
+            const excelRaw = {
+                inputs: {},
+                stocks: [],
+                dividends: [],
+                esppStocks: [
+                    { date: '12-01-2023' },
+                    { date: '12-15-2023' },
+                    { date: '12-31-2023' },
+                    { date: '11-30-2023' },
+                ],
+            };
+            const result = filterByYears(excelRaw, ['2023']);
+            expect(result.esppStocks.map(e => e.date).sort())
+                .toEqual(['11-30-2023', '12-01-2023', '12-15-2023', '12-31-2023']);
+        });
+
     });
+
 });
