@@ -156,7 +156,6 @@ const enqueueReportsProcessing = (files) => {
                 const excelGeneratorInput = {
                     inputs: {
                         getExchangeRateForDay,
-                        esppDiscount: config.esppDiscount,
                     },
                     stocks: [
                         ...morganStanleyInput.stocks,

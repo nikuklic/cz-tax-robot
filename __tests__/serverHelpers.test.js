@@ -264,7 +264,7 @@ describe('serverHelpers', () => {
     describe('filterByYears', () => {
         it('should keep only entries for selected years', () => {
             const excelRaw = {
-                inputs: { esppDiscount: 10 },
+                inputs: {},
                 stocks: [
                     { date: '03-15-2024' },
                     { date: '06-15-2025' },
@@ -316,13 +316,13 @@ describe('serverHelpers', () => {
 
         it('should preserve inputs and other properties', () => {
             const excelRaw = {
-                inputs: { esppDiscount: 10, getExchangeRateForDay: () => 22 },
+                inputs: { getExchangeRateForDay: () => 22 },
                 stocks: [],
                 dividends: [],
                 esppStocks: [],
             };
             const result = filterByYears(excelRaw, ['2025']);
-            expect(result.inputs.esppDiscount).toBe(10);
+            expect(result.inputs.getExchangeRateForDay).toBeDefined();
         });
 
         it('should handle empty selectedYears array', () => {

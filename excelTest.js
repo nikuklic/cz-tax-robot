@@ -13,7 +13,6 @@ const input = {
         "exchangeRatesForYears": {
             [firstKnownYear]: { usdCzk: rates.usdCzk, eurCzk: rates.eurCzk }
         },
-        "esppDiscount": config.esppDiscount
     },
     "stocks": [{
         "date": "2018-03-31",

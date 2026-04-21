@@ -113,7 +113,8 @@ const EN = {
     sheetCustomExchangeRate: 'English daily USD-CZK',
     inputs: 'Inputs',
     exchangeRate: 'Exchange Rate',
-    esppDiscount: 'ESPP Discount',
+    gainUSD: 'Gain (USD)',
+    gainCZK: 'Gain (CZK)',
     stocksReceived: 'Stocks received',
     date: 'Date',
     amount: 'Amount',
@@ -129,7 +130,6 @@ const EN = {
     taxUSD: 'Tax withheld',
     taxCZK: 'Tax withheld (CZK)',
     esppStocks: 'ESPP Stocks',
-    discount: 'Discounted',
     overallStocksCZK: 'Overall stocks acquired (CZK)',
     overallDividendsCZK: 'Overall dividends acquired (CZK)',
     overallTaxCZK: 'Dividend tax withheld (CZK)',
@@ -223,7 +223,8 @@ const CZ = {
     sheetCustomExchangeRate: 'Česky denní USD-CZK',
     inputs: 'Vstupy',
     exchangeRate: 'Kurz',
-    esppDiscount: 'Sleva pro ESPP',
+    gainUSD: 'Sleva z nákupu (USD)',
+    gainCZK: 'Sleva z nákupu (CZK)',
     stocksReceived: 'Nabytí akcií',
     date: 'Datum',
     amount: 'Počet',
@@ -239,7 +240,6 @@ const CZ = {
     taxUSD: 'Srážková daň',
     taxCZK: 'Srážková daň (CZK)',
     esppStocks: 'Nabytí akcií ESPP',
-    discount: 'Sleva',
     overallStocksCZK: 'Nabyté akcie celkem (CZK)',
     overallDividendsCZK: 'Dividendy z držení akcií celkem (CZK)',
     overallTaxCZK: 'Srážková daň z dividendů (CZK)',
@@ -436,11 +436,6 @@ const populateWorksheet = (ws, input, locale) => {
         }
     }
 
-    const esppDiscountRow = rowCursor + rateRowOffset;
-    ws.cell(esppDiscountRow, 1).string(locale.esppDiscount);
-    ws.cell(esppDiscountRow, 2).number(input.inputs.esppDiscount / 100).style(PERCENTAGE);
-    const esppDiscount = xl.getExcelCellRef(esppDiscountRow, 2);
-
     // Helper: get year from MM-DD-YYYY date string
     const getYearFromDate = dateString => {
         const parts = dateString.split('-');
@@ -464,7 +459,7 @@ const populateWorksheet = (ws, input, locale) => {
     };
 
     // Stocks
-    rowCursor = esppDiscountRow + SKIP_ROW;
+    rowCursor = rowCursor + rateRowOffset + SKIP_ROW;
     ws.cell(rowCursor + 0, 1).string(locale.stocksReceived).style(TITLE);
     if (input.stocks.length > 0) {
         ws.cell(rowCursor + 0, 1).string(`${locale.stocksReceived} (${input.stocks[0].source})`).style(TITLE);
@@ -555,6 +550,8 @@ const populateWorksheet = (ws, input, locale) => {
         ws.cell(rowCursor + 1, 3).string(locale.priceUSD).style(HEADER);
         ws.cell(rowCursor + 1, 4).string(locale.amount).style(HEADER);
         ws.cell(rowCursor + 1, 5).string(locale.priceCZK).style(HEADER);
+        ws.cell(rowCursor + 1, 6).string(locale.gainUSD).style(HEADER);
+        ws.cell(rowCursor + 1, 7).string(locale.gainCZK).style(HEADER);
 
         rowCursor += SKIP_HEADER;
         input.esppStocks.sort(compareDates).forEach((s, i) => {
@@ -571,6 +568,17 @@ const populateWorksheet = (ws, input, locale) => {
                 const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
                 ws.cell(rowCursor + i, 5).formula(`${price}*${exchangeRate}`).style(CZK);
             }
+
+            // Gain from Purchase (directly from Fidelity statement)
+            const gain = s.gainFromPurchase || 0;
+            ws.cell(rowCursor + i, 6).number(gain).style(style);
+            if (isSourceCZK(s.source)) {
+                ws.cell(rowCursor + i, 7).number(gain).style(CZK);
+            } else {
+                const gainCell = xl.getExcelCellRef(rowCursor + i, 6);
+                const exchangeRate = xl.getExcelCellRef(...exchangeRateCoordsForEntry(s.source, s.date));
+                ws.cell(rowCursor + i, 7).formula(`${gainCell}*${exchangeRate}`).style(CZK);
+            }
         });
 
         ws.cell(rowCursor + input.esppStocks.length, 1).string(locale.total).style(YELLOW_TITLE);
@@ -580,16 +588,14 @@ const populateWorksheet = (ws, input, locale) => {
         const esppStockPriceBegin = xl.getExcelCellRef(rowCursor, 5);
         const esppStockPriceEnd = xl.getExcelCellRef(rowCursor + input.esppStocks.length - 1, 5);
         ws.cell(rowCursor + input.esppStocks.length, 5).formula(`SUM(${esppStockPriceBegin}:${esppStockPriceEnd})`).style(YELLOW_CZK);
-        const esppStockPriceSum = xl.getExcelCellRef(rowCursor + input.esppStocks.length, 5);
-        ws.cell(rowCursor + input.esppStocks.length + 1, 1).string(locale.discount).style(YELLOW_TITLE);
-        ws.cell(rowCursor + input.esppStocks.length + 1, 2).style(YELLOW);
-        ws.cell(rowCursor + input.esppStocks.length + 1, 3).style(YELLOW);
 
-        ws.cell(rowCursor + input.esppStocks.length + 1, 4).style(YELLOW);
-        ws.cell(rowCursor + input.esppStocks.length + 1, 5).formula(`${esppStockPriceSum} / (1 - ${esppDiscount}) * ${esppDiscount}`).style(YELLOW_CZK);
-        esppStockPriceDiscountSumCzk = xl.getExcelCellRef(rowCursor + input.esppStocks.length + 1, 5);
+        const esppGainBegin = xl.getExcelCellRef(rowCursor, 7);
+        const esppGainEnd = xl.getExcelCellRef(rowCursor + input.esppStocks.length - 1, 7);
+        ws.cell(rowCursor + input.esppStocks.length, 6).style(YELLOW);
+        ws.cell(rowCursor + input.esppStocks.length, 7).formula(`SUM(${esppGainBegin}:${esppGainEnd})`).style(YELLOW_CZK);
+        esppStockPriceDiscountSumCzk = xl.getExcelCellRef(rowCursor + input.esppStocks.length, 7);
 
-        rowCursor += input.esppStocks.length + 1 + SKIP_ROW;
+        rowCursor += input.esppStocks.length + SKIP_ROW;
     }
 
 
